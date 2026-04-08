@@ -162,19 +162,17 @@ namespace {
 	{
 		vr::DriverPose_t reference, target;
 		reference.poseIsValid = false;
-		reference.result = vr::ETrackingResult::TrackingResult_Uninitialized;
 		target.poseIsValid = false;
-		target.result = vr::ETrackingResult::TrackingResult_Uninitialized;
 
 		reference = ctx.devicePoses[ctx.referenceID];
 		target = ctx.devicePoses[ctx.targetID];
 
 		bool ok = true;
-		if (!reference.poseIsValid && reference.result != vr::ETrackingResult::TrackingResult_Running_OK)
+		if (!reference.poseIsValid)
 		{
 			CalCtx.Log("Reference device is not tracking\n"); ok = false;
 		}
-		if (!target.poseIsValid && target.result != vr::ETrackingResult::TrackingResult_Running_OK)
+		if (!target.poseIsValid)
 		{
 			CalCtx.Log("Target device is not tracking\n"); ok = false;
 		}
@@ -434,6 +432,26 @@ void CalibrationTick(double time)
 		}
 	});
 
+	// Drain the SteamVR event queue and mark the device list dirty whenever
+	// something that could change which devices we should apply transforms to
+	// has occurred.  We do this even if we would early-return below due to
+	// stale HMD tracking, so the flag is set for the next healthy tick.
+	{
+		vr::VREvent_t vrEvent;
+		while (vr::VRSystem()->PollNextEvent(&vrEvent, sizeof(vrEvent))) {
+			switch (vrEvent.eventType) {
+				case vr::VREvent_TrackedDeviceActivated:
+				case vr::VREvent_TrackedDeviceDeactivated:
+				case vr::VREvent_TrackedDeviceUpdated:
+				case vr::VREvent_TrackedDeviceRoleChanged:
+					ctx.deviceListDirty = true;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
 	// check for non-updating headset tracking space (caused by quest out of bounds or taken off head for example) and abort everything for this tick
 	auto p = ctx.devicePoses[vr::k_unTrackedDeviceIndex_Hmd].vecPosition;
 	if ((p[0] == 0.0 && p[1] == 0.0 && p[2] == 0.0) || (ctx.xprev == p[0] && ctx.yprev == p[1] && ctx.zprev == p[2])) {
@@ -447,10 +465,13 @@ void CalibrationTick(double time)
 	if (ctx.state == CalibrationState::None || ctx.state == CalibrationState::ContinuousStandby
 		|| (ctx.state == CalibrationState::Continuous && !calibration.isValid()))
 	{
-		if ((time - ctx.timeLastScan) >= 1.0)
+		// Fire immediately on a device-list change; fall back to a 1 s heartbeat
+		// so we always converge even if a device event was missed.
+		if (ctx.deviceListDirty || (time - ctx.timeLastScan) >= 1.0)
 		{
 			ScanAndApplyProfile(ctx);
 			ctx.timeLastScan = time;
+			ctx.deviceListDirty = false;
 		}
 	}
 
@@ -460,7 +481,7 @@ void CalibrationTick(double time)
 		}
 		else {
 			ctx.wantedUpdateInterval = 0.5;
-			ctx.Log("Waiting for devices...\n");
+			ctx.Log("Waiting for devices...");
 			return;
 		}
 	}
@@ -474,10 +495,11 @@ void CalibrationTick(double time)
 	{
 		ctx.wantedUpdateInterval = 0.1;
 
-		if ((time - ctx.timeLastScan) >= 0.1)
+		if (ctx.deviceListDirty || (time - ctx.timeLastScan) >= 0.1)
 		{
 			ScanAndApplyProfile(ctx);
 			ctx.timeLastScan = time;
+			ctx.deviceListDirty = false;
 		}
 		return;
 	}
@@ -608,6 +630,7 @@ void CalibrationTick(double time)
 	if (calibration.isValid()) {
 		ctx.calibratedRotation = calibration.EulerRotation();
 		ctx.calibratedTranslation = calibration.Transformation().translation() * 100.0; // convert to cm units for profile storage
+		ctx.calibratedScale = calibration.Scale(); // Procrustes uniform scale (1.0 = no difference)
 		ctx.refToTargetPose = calibration.RelativeTransformation();
 		ctx.relativePosCalibrated = calibration.isRelativeTransformationCalibrated();
 

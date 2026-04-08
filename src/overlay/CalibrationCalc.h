@@ -75,6 +75,13 @@ public:
 	bool isValid() const {
 		return m_isValid;
 	}
+
+	// Uniform scale factor computed by the last successful calibration.
+	// 1.0 means the two tracking spaces agree on scale. Values outside
+	// ~[0.95, 1.05] indicate a real scale mismatch worth correcting.
+	double Scale() const {
+		return m_estimatedScale;
+	}
 	
 	const Eigen::AffineCompact3d RelativeTransformation() const 
 	{
@@ -116,9 +123,15 @@ public:
 	double m_axisVariance = 0.0;
 	long m_calcCycle;
 
+	// Number of differential rotation sample pairs that passed all quality
+	// gates in the most recent CalibrateRotation call.  Exposed so the UI
+	// can report calibration data density to the user.
+	size_t UsedSampleCount() const { return m_usedSampleCount; }
+
 private:
 	bool m_isValid;
 	Eigen::AffineCompact3d m_estimatedTransformation;
+	double m_estimatedScale = 1.0;
 	bool m_relativePosCalibrated = false;
 
 	/*
@@ -129,12 +142,19 @@ private:
 
 	std::deque<Sample> m_samples;
 
+	// Mutable because CalibrateRotation is const but updates this counter as a
+	// diagnostic side-effect (same pattern as a cache or mutex).
+	mutable size_t m_usedSampleCount = 0;
+
 	std::vector<bool> DetectOutliers() const;
 	Eigen::Vector3d CalibrateRotation(const bool ignoreOutliers) const;
 	Eigen::Vector3d CalibrateTranslation(const Eigen::Matrix3d &rotation) const;
-	void CalibrateScaleOffset(const Eigen::Matrix3d &rotation, Eigen::Vector3d* out_scaleOffset, float* out_scaleFactor) const;
+	// out_scaleOffset: reserved for future pivot-point-scaled correction (pass nullptr)
+	// out_scaleFactor: receives the computed uniform scale; clamped to [0.8, 1.2]
+	void CalibrateScaleOffset(const Eigen::Matrix3d &rotation, Eigen::Vector3d* out_scaleOffset, double* out_scaleFactor) const;
 
-	Eigen::AffineCompact3d ComputeCalibration(const bool ignoreOutliers) const;
+	// out_scale: if non-null, receives the Procrustes uniform scale factor
+	Eigen::AffineCompact3d ComputeCalibration(const bool ignoreOutliers, double* out_scale = nullptr) const;
 
 	double RetargetingErrorRMS(const Eigen::Vector3d& hmdToTargetPos, const Eigen::AffineCompact3d& calibration) const;
 	Eigen::Vector3d ComputeRefToTargetOffset(const Eigen::AffineCompact3d& calibration) const;

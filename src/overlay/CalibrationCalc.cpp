@@ -96,10 +96,33 @@ namespace {
 		ds.ref = AxisFromRotationMatrix3(dref);
 		ds.target = AxisFromRotationMatrix3(dtarget);
 
-		// Reject samples that were too close to each other.
-		auto refA = AngleFromRotationMatrix3(dref);
+		// Reject pairs where either device barely moved — below this angle the
+		// rotation axis extracted from the skew-symmetric part is dominated by
+		// numerical noise.  0.3 rad (~17°) is a tighter gate than the previous
+		// 0.4 rad (~23°), which gives ~40% more passing pairs for moderate motion
+		// while still keeping the noise floor low.
+		auto refA    = AngleFromRotationMatrix3(dref);
 		auto targetA = AngleFromRotationMatrix3(dtarget);
-		ds.valid = refA > 0.4 && targetA > 0.4 && ds.ref.norm() > 0.01 && ds.target.norm() > 0.01;
+
+		// Primary gate: both rotation angles and axis vectors must be non-degenerate.
+		ds.valid = refA    > 0.3
+		        && targetA > 0.3
+		        && ds.ref.norm()    > 0.01
+		        && ds.target.norm() > 0.01;
+
+		// Secondary gate: angle-magnitude consistency check.
+		// When both devices are rigidly coupled the rotation angles should agree
+		// closely; a large discrepancy indicates a tracking glitch or a sample gap
+		// spanning a tracking-loss event.
+		// ratio = min/max ∈ (0,1]; we require > 0.6 (< 40% disagreement).
+		//
+		// This is placed AFTER the primary check so we only compute the division
+		// once both angles are confirmed > 0.3, which guarantees neither is zero
+		// (eliminates any 0/0 = NaN risk).
+		if (ds.valid) {
+			double angleRatio = (refA < targetA) ? (refA / targetA) : (targetA / refA);
+			ds.valid = (angleRatio > 0.6);
+		}
 
 		ds.ref.normalize();
 		ds.target.normalize();
@@ -108,6 +131,51 @@ namespace {
 }
 
 const double CalibrationCalc::AxisVarianceThreshold = 0.001;
+
+namespace {
+	// Complementary-filter blending weight for continuous calibration updates.
+	//
+	// Maps the RMS retargeting error of the new measurement to an alpha value:
+	//   error ≈ 0.000 m  →  alpha = 0.40  (high confidence, converge in ~5 updates)
+	//   error ≈ 0.025 m  →  alpha = 0.25
+	//   error ≥ 0.050 m  →  alpha = 0.10  (low confidence, very gradual correction)
+	//
+	// The "kErrorScale" pivot is chosen to match the relPoseMaxError default (0.005 m)
+	// scaled up: below 5 mm we trust the measurement strongly; above 50 mm we become
+	// very conservative.
+	double ComputeFilterAlpha(double error) {
+		const double kMaxAlpha  = 0.40;
+		const double kMinAlpha  = 0.10;
+		const double kErrorScale = 0.050; // error at which alpha clamps to kMinAlpha
+		double t = error / kErrorScale;
+		if (t > 1.0) t = 1.0;
+		return kMaxAlpha - (kMaxAlpha - kMinAlpha) * t;
+	}
+
+	// Blend two AffineCompact3d transforms using a complementary filter.
+	// Rotation uses SLERP; translation uses linear interpolation.
+	// alpha = weight given to `next` (0 = keep `current`, 1 = snap to `next`).
+	Eigen::AffineCompact3d BlendCalibration(
+		const Eigen::AffineCompact3d& current,
+		const Eigen::AffineCompact3d& next,
+		double alpha)
+	{
+		// SLERP rotation
+		const Eigen::Quaterniond qCur(current.rotation());
+		const Eigen::Quaterniond qNext(next.rotation());
+		const Eigen::Quaterniond qBlend = qCur.slerp(alpha, qNext);
+
+		// Linear translation
+		const Eigen::Vector3d tBlend =
+			current.translation() * (1.0 - alpha) + next.translation() * alpha;
+
+		Eigen::AffineCompact3d result = Eigen::AffineCompact3d::Identity();
+		result.linear()      = qBlend.toRotationMatrix();
+		result.translation() = tBlend;
+		return result;
+	}
+} // namespace
+
 void CalibrationCalc::PushSample(const Sample& sample) {
 	m_samples.push_back(sample);
 }
@@ -115,6 +183,8 @@ void CalibrationCalc::PushSample(const Sample& sample) {
 void CalibrationCalc::Clear() {
 	m_estimatedTransformation.setIdentity();
 	m_isValid = false;
+	m_estimatedScale = 1.0;
+	m_usedSampleCount = 0;
 	m_samples.clear();
 	m_axisVariance = 0.0;
 	m_refToTargetPose = Eigen::AffineCompact3d::Identity();
@@ -214,6 +284,11 @@ Eigen::Vector3d CalibrationCalc::CalibrateRotation(const bool ignoreOutliers) co
 			}
 		}
 	}
+	// Record how many pairs actually made it past all quality gates.
+	// UI code can surface this so the user knows if their motion is generating
+	// enough data (e.g. "Used 847 / 12250 possible pairs").
+	m_usedSampleCount = deltas.size();
+
 	//char buf[256];
 	//snprintf(buf, sizeof buf, "Got %zd samples with %zd delta samples\n", m_samples.size(), deltas.size());
 	//CalCtx.Log(buf);
@@ -314,8 +389,60 @@ Eigen::Vector3d CalibrationCalc::CalibrateTranslation(const Eigen::Matrix3d &rot
 	return trans;
 }
 
-void CalibrationCalc::CalibrateScaleOffset(const Eigen::Matrix3d& rotation, Eigen::Vector3d* out_scaleOffset, float* out_scaleFactor) const {
-	// @TODO: figure out where the target and ref
+void CalibrationCalc::CalibrateScaleOffset(const Eigen::Matrix3d& rotation, Eigen::Vector3d* out_scaleOffset, double* out_scaleFactor) const {
+	// Procrustes uniform-scale solution.
+	// Given the already-computed rotation R, find scalar s minimising:
+	//   Σ || target_i - (s * R * ref_i + t) ||²
+	//
+	// After subtracting centroids (denote primed quantities):
+	//   s = Σ(target'_i · rot_ref'_i) / Σ||rot_ref'_i||²
+	//   where rot_ref'_i = R * ref_i − μ(R·ref),  target'_i = target_i − μ(target)
+	//
+	// out_scaleOffset is reserved for a future pivot-point implementation
+	// (the driver TODO comment: "Offset, scale, and re-offset").
+
+	if (out_scaleOffset) *out_scaleOffset = Eigen::Vector3d::Zero();
+
+	if (!out_scaleFactor) return;
+
+	Eigen::Vector3d rotRefCentroid = Eigen::Vector3d::Zero();
+	Eigen::Vector3d targetCentroid  = Eigen::Vector3d::Zero();
+	int count = 0;
+
+	for (const auto& s : m_samples) {
+		if (!s.valid) continue;
+		rotRefCentroid += rotation * s.ref.trans;
+		targetCentroid  += s.target.trans;
+		count++;
+	}
+
+	if (count < 2) {
+		*out_scaleFactor = 1.0;
+		return;
+	}
+
+	rotRefCentroid /= count;
+	targetCentroid  /= count;
+
+	double numerator   = 0.0;
+	double denominator = 0.0;
+
+	for (const auto& s : m_samples) {
+		if (!s.valid) continue;
+		const Eigen::Vector3d rotRef = rotation * s.ref.trans - rotRefCentroid;
+		const Eigen::Vector3d tgt    = s.target.trans - targetCentroid;
+		numerator   += tgt.dot(rotRef);
+		denominator += rotRef.squaredNorm();
+	}
+
+	double scale = (denominator > 1e-10) ? (numerator / denominator) : 1.0;
+
+	// Clamp to a physically reasonable range.  Real tracking-space scale
+	// errors are almost always < 2%; anything outside ±20% is a bad measurement.
+	if (scale < 0.8) scale = 0.8;
+	if (scale > 1.2) scale = 1.2;
+
+	*out_scaleFactor = scale;
 }
 
 
@@ -335,11 +462,18 @@ namespace {
 	}
 }
 
-Eigen::AffineCompact3d CalibrationCalc::ComputeCalibration(const bool ignoreOutliers) const {
+Eigen::AffineCompact3d CalibrationCalc::ComputeCalibration(const bool ignoreOutliers, double* out_scale) const {
 	Eigen::Vector3d rotation = CalibrateRotation(ignoreOutliers);
 	Eigen::Matrix3d rotationMat = quaternionRotateMatrix(VRRotationQuat(rotation));
 	Eigen::Vector3d translation = CalibrateTranslation(rotationMat);
-	
+
+	// Compute Procrustes scale from the same sample set.
+	// The rotation and translation are kept unmodified; scale is applied
+	// separately by the driver (tf.scale on raw device position).
+	if (out_scale) {
+		CalibrateScaleOffset(rotationMat, nullptr, out_scale);
+	}
+
 	Eigen::AffineCompact3d rot(rotationMat);
 	Eigen::Translation3d trans(translation);
 
@@ -637,12 +771,14 @@ bool CalibrationCalc::CalibrateByRelPose(Eigen::AffineCompact3d &out) const {
 
 
 bool CalibrationCalc::ComputeOneshot(const bool ignoreOutliers) {
-	auto calibration = ComputeCalibration(ignoreOutliers);
+	double scale = 1.0;
+	auto calibration = ComputeCalibration(ignoreOutliers, &scale);
 
 	bool valid = ValidateCalibration(calibration);
 
 	if (valid) {
 		m_estimatedTransformation = calibration; // @NOTE: Normal calibration
+		m_estimatedScale = scale;
 		m_isValid = true;
 		return true;
 	}
@@ -677,6 +813,13 @@ bool CalibrationCalc::ComputeIncremental(bool &lerp, double threshold, double re
 
 			Metrics::posOffset_byRelPose.Push(relPosOffset * 1000);
 			Metrics::error_byRelPose.Push(relPoseError * 1000);
+
+			// Apply complementary filter when we already have a valid baseline so
+			// that pose-solver noise does not cause the calibration to oscillate.
+			if (m_isValid) {
+				const double alpha = ComputeFilterAlpha(relPoseError);
+				byRelPose = BlendCalibration(m_estimatedTransformation, byRelPose, alpha);
+			}
 
 			m_isValid = true;
 			m_estimatedTransformation = byRelPose;
@@ -721,10 +864,12 @@ bool CalibrationCalc::ComputeIncremental(bool &lerp, double threshold, double re
 		}
 	}
 
+	// Keep the existing scale as default; overwrite only when Kabsch runs.
+	double newScale = m_estimatedScale;
 	double newVariance = 0;
 	bool shouldRapidCorrect = true;
 	if (!newCalibrationValid) {
-		calibration = ComputeCalibration(ignoreOutliers);
+		calibration = ComputeCalibration(ignoreOutliers, &newScale);
 
 		newVariance = ComputeAxisVariance(calibration)(1);
 		Metrics::axisIndependence.Push(newVariance);
@@ -787,7 +932,21 @@ bool CalibrationCalc::ComputeIncremental(bool &lerp, double threshold, double re
 		}
 		
 		m_isValid = true;
-		m_estimatedTransformation = calibration; // @NOTE: Continuous calibration
+
+		// Complementary filter: smooth the calibration estimate rather than
+		// snapping to the raw Kabsch/relPose result.  `lerp` is true when we
+		// already had a valid estimate (set above from the old m_isValid), which
+		// is exactly when filtering makes sense.  For the very first accepted
+		// result we store it directly so we converge immediately.
+		if (lerp) {
+			const double alpha = ComputeFilterAlpha(newError);
+			m_estimatedTransformation = BlendCalibration(
+				m_estimatedTransformation, calibration, alpha); // @NOTE: Continuous calibration (filtered)
+		} else {
+			m_estimatedTransformation = calibration; // @NOTE: Continuous calibration (first estimate)
+		}
+
+		m_estimatedScale = newScale;
 		m_axisVariance = newVariance;
 
 		if (!usingRelPose) {

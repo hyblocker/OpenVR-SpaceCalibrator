@@ -47,6 +47,11 @@ struct CalibrationContext
 	bool clearOnLog = false;
 	bool quashTargetInContinuous = false;
 	double timeLastTick = 0, timeLastScan = 0, timeLastAssign = 0;
+
+	// Set to true whenever a SteamVR device-activation/deactivation event arrives,
+	// or on startup.  ScanAndApplyProfile() clears it after running so subsequent
+	// ticks only pay the scan cost when something actually changed.
+	bool deviceListDirty = true;
 	bool ignoreOutliers = false;
 	double wantedUpdateInterval = 1.0;
 	float jitterThreshold = 3.0f;
@@ -200,12 +205,12 @@ struct CalibrationContext
 
 	bool TargetPoseIsValidSimple() const {
 		return targetID >= 0 && targetID <= vr::k_unMaxTrackedDeviceCount
-			&& devicePoses[targetID].poseIsValid && devicePoses[targetID].result == vr::ETrackingResult::TrackingResult_Running_OK;
+			&& devicePoses[targetID].poseIsValid;
 	}
 
 	bool ReferencePoseIsValidSimple() const {
 		return referenceID >= 0 && referenceID <= vr::k_unMaxTrackedDeviceCount
-			&& devicePoses[referenceID].poseIsValid && devicePoses[referenceID].result == vr::ETrackingResult::TrackingResult_Running_OK;
+			&& devicePoses[referenceID].poseIsValid;
 	}
 };
 
