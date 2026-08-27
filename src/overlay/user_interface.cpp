@@ -1515,6 +1515,7 @@ void page_about(double currentTime)
     ImGui::BulletText("Flippy");
     ImGui::BulletText("Nara");
     ImGui::BulletText("C'Ya");
+    ImGui::BulletText("Dem01nS");
 
     ImGui::Dummy(ImVec2(0, k_SPACING));
 

@@ -1,0 +1,278 @@
+{
+  "app_title": "{0} {1}", /* 0 : Space Calibrator ; 1 : version (eg 2.0.0) */
+  "app_title_vr": "{0} {1} - 마우스를 이용하여 VR 오버레이를 닫습니다.", /* 0 : Space Calibrator ; 1 : version (eg 2.0.0) */
+  "tracking_system_no_systems": "추적중인 장치가 없습니다. 장치의 전원을 켜 진행해주세요.", /* Should never be hit but you never know */
+
+  "error_unknown_catastrophic": "알 수 없는 치명적인 문제가 발생했습니다! 해당 내용을 저희가 알 수 있도록 GitHub 또는 스팀 커뮤니티 토론에 남겨주세요! .",
+  "ipc_unavailable": "Space Calibrator를 SteamVR 드라이버 연결에 실패했습니다. 속성에서 설치된 파일 -> 소프트웨어 파일 무결성 검사를 진행하시거나 앱을 재설치 해주세요.",
+  "steamvr_unavailable": "SteamVR에 연결하는데 실패했습니다.",
+  "vr_troubleshooting_hmd_not_found": "VR헤드셋을 연결 한 후 SteamVR를 켜주세요.",
+  "vr_troubleshooting_connect_steamlink": "VR헤드셋에 SteamLink를 실행한 뒤, SteamVR에 연결해주세요.",
+  "vr_troubleshooting_generic": "VR헤드셋을 연결 한 후 SteamVR를 켜주세요. ({0} {1})", /* 0 : SteamVR init error (eg 108), 1 : SteamVR init error string (eg Headset not connected) - this string is provided by Steam. */
+
+  "calibration_title": "보정",
+  "calibration_count_none": "보정된 값은 없습니다. 새로운 보정값을 만들어주세요.", // Shown when there are no calibrations active
+  "calibration_new": "새로 보정하기",
+  "calibration_delete": "보정값 삭제",
+  "calibration_next": "다음 보정값",
+  "calibration_previous": "이전 보정값",
+
+  "calibration_status_none": "보정된 기기가 없습니다.",
+  "calibration_status_none_description": "연결할 기기를 선택하여 보정을 시작합니다.",
+  "calibration_status_edit": "보정값 수정",
+  "calibration_status_edit_description": "현재 보정값을 수정합니다.",
+  "calibration_status_continuous": "연속 보정",
+  "calibration_status_continuous_description": "보정작업이 활성화 상태입니다. 수 초 마다 고정된 트래커를 이용하여 자동으로 재보정합니다.",
+  "calibration_status_standard": "일반 보정",
+  "calibration_status_standard_description": "보정작업이 활성화 상태입니다. 드리프트가 일어나면 재보정해야 할 수 있습니다.",
+
+  // space here refers to a tracking space / tracking system.
+  "reference_device": "기준 장치",
+  "reference_device_description": "보정에서 기준이 될 장치를 선택합니다. 일반적으로 VR 헤드셋이나 컨트롤러가 있습니다.",
+  "target_device": "타겟 장치",
+  "target_device_description": "위치를 맞출 트래커나 컨트롤러 장치를 선택합니다.",
+  "select_reference_device": "기준 장치 선택",
+  "select_target_device": "타겟 장치 선택",
+
+  "identify_selected_devices": "선택한 장치 식별하기 (LED가 깜빡거리거나 진동이 울립니다.)",
+  "identify_auto_detect_devices": "장치 자동 감지",
+  "calibration_error_reference_hmd_missing": "\"{0}\"에서 타겟 장치를 찾을 수 없습니다. 재보정을 해야합니다.", /* 0 : tracking system name, eg SteamVR Tracking*/
+  "calibration_warning_stage_tracking_disabled": "Stage tracking가 비활성화 상태입니다! 더 나은 경험을 위해 버츄얼 데스크탑 메뉴에서 Streaming 탭에 들어 간 후 \"Center to play area (Stage Tracking)\"를 활성화 해주세요.",
+  "calibration_warning_stage_tracking_disabled_ignore_button": "다시 보여주지 않기",
+
+  "calibration_action_start": "일반 보정",
+  "calibration_action_clear": "보정값 삭제",
+  "calibration_action_continuous": "연속 보정",
+  "calibration_action_edit": "보정값 수정",
+  "save_calibration_profile": "프로파일 저장",
+
+  "calibration_progress": "보정 진행",
+  "calibration_info_move_around_insufficient_samples": "선택한 장치들을 잡고 8자 모양으로 주변을 움직여주세요.",
+
+  "calibration_speed": "보정 속도",
+  "calibration_speed_description": "보정 속도를 정합니다. 느리게 설정 할 수록 정확해집니다. ",
+  "calibration_speed_fast": "빠르게",
+  "calibration_speed_slow": "느리게",
+  "calibration_speed_very_slow": "매우 느리게",
+
+  /* Editing calibrations */
+  "edit_calibration_rotation": "각도",
+  "edit_calibration_position": "위치 (m)",
+  "edit_calibration_yaw": "Yaw",
+  "edit_calibration_pitch": "Pitch",
+  "edit_calibration_roll": "Roll",
+  "edit_calibration_x": "X",
+  "edit_calibration_y": "Y",
+  "edit_calibration_z": "Z",
+  "edit_calibration_scale": "스케일 (m)",
+
+  "continuous_hide_tracker": "앱에서 타겟 장치를 숨깁니다.",
+  "continuous_relative_calibration": "상대 보정 활성화",
+  "continuous_relative_calibration_description": "기준 장치를 상대적으로 보정합니다. (기본적으로 헤드셋) 매 프레임 마다 재보정 할 필요 없이 업데이트 됩니다. 해당 기능은 *연속 보정*을 요구합니다.",
+
+  /* HMD names for Virtual Desktop */
+  /* Virtual desktop lies that it's a Quest 2/3 on most headsets, so we have to substitute the real HMD name ourselves. you generally should
+     NOT have to change these! but some headsets have different names in certain regions (eg PFD MR is YVR MR in China) */
+  "virtual_desktop_hmd_none": "없음", /* should never appear but you never know*/
+  "virtual_desktop_hmd_gearvr": "삼성 기어 VR",
+  "virtual_desktop_hmd_oculus_go": "오큘러스 Go",
+  "virtual_desktop_hmd_oculus_quest_1": "오큘러스 퀘스트",
+  "virtual_desktop_hmd_oculus_quest_2": "오큘러스 퀘스트 2",
+  "virtual_desktop_hmd_meta_quest_pro": "메타 퀘스트 프로",
+  "virtual_desktop_hmd_pico_4": "피코 4",
+  "virtual_desktop_hmd_meta_quest_3": "메타 퀘스트 3",
+  "virtual_desktop_hmd_meta_quest_3s": "메타 퀘스트 3S",
+  "virtual_desktop_hmd_pico_4_ultra": "피코 4 울트라",
+  "virtual_desktop_hmd_samsung_galaxy_xr": "삼성 갤럭시 XR",
+  "virtual_desktop_hmd_play_for_dream_mr": "플레이 포 드림 MR",
+
+  /* vertical tabs on the left */
+  "tab_page_calibration": "보정",
+  "tab_page_graphs": "그래프",
+  "tab_page_base_station_management": "베이스 스테이션",
+  "tab_page_settings": "설정",
+  "tab_page_debug": "디버그",
+  "tab_page_learn": "더 알아보기",
+  "tab_page_about": "소개",
+  
+  /* graphs */
+  "graphs_title": "그래프",
+
+  /* base stations */
+  "base_stations_title": "베이스 스테이션 관리",
+  "base_stations_no_bluetooth": "유효한 블루투스 어뎁터를 찾을 수 없습니다. BLE(Bluetooth Low Energy)가 호환되는 블루투스 어뎁터를 연결하여 베이스 스테이션을 관리 할 수 있습니다.",
+  "base_stations_none_found": "베이스 스테이션을 찾을 수 없습니다. 만일 있다하면 연결해주세요.",
+  "base_stations_header_info": "{0}", // 0: station ID (LHB XXXXXXXX) / nickname
+  "base_stations_warning_collision": "채널 충돌이 감지되었습니다! 트래킹에 문제가 발생 할 수 있습니다. 각 베이스 스테이션 마다 개별적인 채널을 사용해야합니다.",
+  "base_stations_state_sleep": "수면중",
+  "base_stations_state_standby": "대기중",
+  "base_stations_state_active": "활성화됨",
+  "base_stations_state_unknown": "알 수 없음",
+  "base_stations_state_faulty": "문제있음",
+  "base_stations_channel_select_label": "베이스 스테이션 채널을 선택해주세요:",
+  "base_stations_active_channel": "채널 {0}", // 0: channel number (1-15) ; eg Channel 12
+  "base_stations_nickname": "별명",
+
+  /* actions */
+  "base_stations_action_wake_all": "전부 깨우기",
+  "base_stations_action_sleep_all": "전부 재우기",
+  "base_stations_action_fix_collisions": "채널 충돌 고치기",
+  "base_stations_btn_wake": "깨우기",
+  "base_stations_btn_standby": "대기",
+  "base_stations_btn_sleep": "재우기",
+  "base_stations_btn_edit": "수정",
+  "base_stations_btn_save": "저장",
+
+  "base_station_power_management": "베이스 스테이션 전원 관리",
+  "base_stations_power_mgmt_enable": "전원 관리 활성화 *",
+  "base_stations_power_mgmt_enable_description_standby": "SteamVR를 사용하지 않을 때 베이스 스테이션을 대기상태로 바꿉니다. 그리고 SteamVR를 사용할 때 깨웁니다.",
+  "base_stations_power_mgmt_enable_description_sleep": "SteamVR를 사용하지 않을 때 베이스 스테이션을 수면상태로 바꿉니다. 그리고 SteamVR를 사용할 때 깨웁니다.",
+  "base_stations_power_mgmt_on_startup": "SteamVR를 시작할 때 베이스 스테이션을 킵니다.",
+  "base_stations_power_mgmt_on_startup_description": "SteamVR를 시작할 때 꺼져있는 베이스 스테이션의 전원을 킵니다.",
+  "base_stations_power_mgmt_on_shutdown": "SteamVR를 종료할 때 베이스 스테이션을 끕니다.",
+  "base_stations_power_mgmt_on_shutdown_description": "SteamVR를 사용하지 않을 때 베이스 스테이션의 전원을 끕니다.",
+  "base_stations_power_mgmt_standby": "대기",
+  "base_stations_power_mgmt_standby_description": "베이스 스테이션의 레이저만 끕니다. SteamVR이 시작할 때 빠르게 켜지지만, 베이스 스테이션 1.0에서는 작동하지 않으며 일부 베이스 스테이션 2.0에서는 작동하지 않을 수 있습니다. 이 경우 수면을 사용해주세요.",
+  "base_stations_power_mgmt_sleep": "수면",
+  "base_stations_power_mgmt_sleep_description": "베이스 스테이션의 모터와 레이저의 전원을 끕니다.",
+  "base_stations_power_mgmt_warning": "* 여러 SteamVR 사용자가 트래킹 공간을 공유할 경우 사용하는 것을 추천하지 않습니다.",
+
+  /* settings */
+  "settings_title": "설정",
+  "settings_advanced": "고급 설정",
+  "settings_advanced_description": "전문 사용자를 위한 추가적인 설정이 보입니다.",
+  "settings_calibrate_motion_vectors": "모션 벡터 보정",
+  "settings_calibrate_motion_vectors_description": "반응성 움직임에 대한 움직임 예측이 향상됩니다. 물리 효과가 높은 게임에 영향이 있을 수 있습니다.",
+  "settings_autofix_playspace_jumps": "트래커 튀었을때 자동 연결",
+  "settings_autofix_playspace_jumps_description": "트래커가 튀는것을 감지하여 자동으로 보정을 시도합니다.",
+  "settings_enforce_minimum_rotation_variance": "최소 각도 변화 강제",
+  "settings_enforce_minimum_rotation_variance_description": "보정 품질을 향상하기 위해 비슷한 각도값을 자동으로 거부합니다.",
+  "settings_locale": "언어",
+  "settings_reset": "모든 설정값 초기화",
+  "settings_reset_description": "모든 설정을 기본값으로 초기화 합니다. 초기화 후 설정값을 되돌릴 수 없습니다.",
+  "settings_reset_confirm": "설정값이 기본값으로 초기화되고 초기화 이후에 해당 행동을 되돌릴 수 없습니다. 진행하시겠습니까?",
+  "settings_reset_yes": "네",
+  "settings_reset_no": "아니요",
+
+  /* about */
+  "about_title": "소개",
+  "about_description": "Space Calibrator는 SteamVR에서 여러 제조사의 장치들을 함께 움직일 수 있도록 하는 오픈소스 무료 도구입니다.",
+  "about_view_source_info": "소스코드들은 GitHub 리포지토리에서 확인 할 수 있습니다.",
+  "about_contributors_title": "기여자들",
+  "about_contributors_description": "Space Calibrator가 여기에 있을 수 있도록 도와주신 분들 입니다:",
+  "about_translators_title": "번역가들",
+  "about_translators_description": "Space Calibrator를 번역해주신 분들 입니다:",
+  "about_licenses_title": "라이선스",
+  "about_licenses_description": "해당 프로그램은 MIT 라이선스 내에 있습니다 . 기타 의존성에 대해서는 별도의 라이선스 내에 있습니다, 자세한 내용은 라이선스를 참고해주세요.",
+  "about_link_github": "GitHub",
+  "about_link_discord": "디스코드 서버",
+  "about_link_logs_dir": "로그 파일",
+  
+  /* self-troubleshooting */
+  /* found another driver loaded in SteamVR -> legacy ipc connection successful */
+  "troubleshoot_diagnosis_legacy_ipc_found_title": "다른 Space Calibrator가 이미 실행중에 있습니다.",
+  "troubleshoot_diagnosis_legacy_ipc_found_description": "서로 충돌되는 Space Calibrator가 실행중에 있습니다. 삭제를 해야 실행할 수 있습니다. 자동으로 삭제를 진행할까요?",
+  /* found legacy overlay key registered (non steam) */
+  "troubleshoot_diagnosis_legacy_overlay_found_title": "다른 Space Calibrator가 이미 실행중에 있습니다",
+  "troubleshoot_diagnosis_legacy_overlay_found_description": "다른 버전의 Space Calibrator가 실행중에 있습니다. 삭제를 진행할까요?",
+  "troubleshoot_action_yes": "네",
+  "troubleshoot_action_no": "아니요",
+  "troubleshoot_action_quit": "나가기",
+
+  /* tutorial */
+  "learn_title": "더 알아보기",
+  "learn_card_standard_calibration": "일반 보정",
+  "learn_card_standard_calibration_description": "서로 다른 장치를 연결하는 방법에 대해 배웁니다.",
+  "learn_card_continuous_calibration": "연속 보정",
+  "learn_card_continuous_calibration_description": "주기적으로 보정하여 발생하는 오차를 줄이는 방법에 대해 배웁니다.",
+  "learn_card_base_station_management": "베이스 스테이션 관리",
+  "learn_card_base_station_management_description": "무선으로 베이스 스테이션을 관리 하는 방법에 대해 배웁니다.",
+  "learn_card_ui_tour": "UI 투어",
+  "learn_card_ui_tour_description": "Space Calibrator의 인터페이스를 둘러봅니다.",
+  "learn_action_back": "뒤로가기",
+
+  /* these are kinda like a messed up wiki because its inlined into the app like this, oh well lol */
+  "learn_page_standard_desc": "일반 보정은 서로 다른 두 트래킹 시스템을 하나로 연동함으로써 VR 장치들이 같은 플레이 공간에서 작동하도록 설정합니다.",
+  "learn_page_standard_select_devices_title": "장치를 선택해주세요",
+  "learn_page_standard_select_devices_desc": "시작하기 전에 사용자가 앱에서 연동할 두 장치를 선택해줘야합니다.",
+  "learn_page_standard_ref_device": "기준 장치: 보정에서 기준이 될 장치를 선택합니다. 일반적으로 컨트롤러가 있습니다.",
+  "learn_page_standard_target_device": "타겟 장치: 연동되지 않은 기준 장치에 맞출 트래커나 컨트롤러 장치를 선택합니다.",
+  "learn_page_standard_perform_title": "보정을 진행합니다",
+  "learn_page_standard_perform_step1": "기준 장치와 타겟 장치를 한 손에 단단히 쥐어 줍니다. 가능한 단단히 쥐어줌으로써 보정 과정중에 움직이지 않도록 고정합니다.",
+  "learn_page_standard_perform_step2": "일반 보정 버튼을 눌러 보정을 시작합니다.",
+  "learn_page_standard_perform_step3": "밑에 있는 그림 처럼 방 안을 8자 모양으로 움직여주세요.",
+  "learn_page_standard_speeds_title": "보정 속도",
+  "learn_page_standard_speeds_desc": "필요에 따라 보정 속도를 조절하여 어느정도 움직일지 정할 수 있습니다. 움직임이 많을 수록 보정 품질이 향상됩니다.",
+  "learn_page_standard_speed_fast": "빠름: 보정을 하는데 시간이 적게 소모되지만 그만큼 보정 품질이 좋지 않을 수 있습니다.",
+  "learn_page_standard_speed_slow": "느림 / 매우 느림: 보정을 하는데 시간이 많이 소모되지만 그만큼 보정 품질이 좋아질 수 있습니다.",
+  "learn_page_standard_completion_note": "진행바가 다 채워지면, 여러분의 장비가 연동되어 있을 것입니다. 그렇지 않는다면 다시 보정을 진행하셔야합니다.",
+  "learn_page_standard_drift_title": "드리프트에 대하여",
+  "learn_page_standard_drift_desc": "시간이 지날수록 장치들은 드리프트를 일으키게 되어 보정이 망가지게 됩니다. 다시 보정하여 맞추면 되지만, 자주 일어나게 되면 연속 보정을 고려해봐야할 수 있습니다.",
+
+  "learn_page_continuous_desc1": "만약 여러분께서 장치가 천천히 돌아가거나 튀거나 드리프팅이 일어나는걸 알게되었다면 연속 보정이 해결책이 될 수 있습니다.",
+  "learn_page_continuous_desc2": "백그라운드에서 보정을 연속적으로 해줌으로써 매번 멈추고 보정하는 번거로운 작업을 할 필요가 없어집니다.",
+  "learn_page_continuous_note_title": "알아야 할 내용",
+  "learn_page_continuous_note_desc": "헤드셋에 고정된 트래커(뚝트)가 필수적으로 요구됩니다.",
+  "learn_page_continuous_desc3": "연속 보정은 지속적으로 재보정을 함으로써 한번 설정해두면 보정 문제에 대해 더 이상 신경 쓸 필요가 없습니다.",
+  "learn_page_continuous_setup_instructions": "연속 보정을 하기 위해 일반 보정에서 처음 설명했던것 처럼 장치를 선택해야합니다. 이번엔 헤드셋이 기준 장치가 되고, 헤드셋에 고정된 트래커(뚝트)가 타켓 장치가 되어야합니다. 그 다음 연속 보정 버튼을 누릅니다. 초기 보정이 될 때 까지 시간이 걸립니다. 앱이 움직임을 학습할 수 있도록 몸을 움직여주세요!",
+  "learn_page_continuous_should_use_title": "연속 보정을 꼭 써야할까요?",
+  "learn_page_continuous_should_use_standard": "만약 여분의 트래커가 없거나, 장시간 동안 플레이 하지 않거나, 일반 보정을 자주하는것에 있어 불편함이 없다면 일반 보정을 사용하셔도 문제 없습니다.",
+  "learn_page_continuous_should_use_continuous": "만약 드리프트가 일어날 정도로 장시간을 플레이 하거나, 드리프트에 대해 생각하기도 싫다면 연속 보정을 사용하시면 됩니다.",
+  "learn_page_continuous_physical_setup_title": "물리적 설정(헤드셋 위에 트래커 장착)",
+  "learn_page_continuous_physical_setup_desc1": "연속 보정을 사용하기 위해서는 헤드셋 위에 트래커를 고정시켜야합니다. 헤드셋 마다 별도의 마운트가 존재하며 3D 프린터 출력물을 만들거나, 커뮤니티에서 사용하는 방법을 찾을 수 있습니다.",
+  "learn_page_continuous_physical_setup_desc2": "장착했으면 트래커는 반드시 고정되어야하며. 흔들리거나 덜 고정되어선 안됩니다. 잘 고정되어있다면 그만큼 연속 보정의 결과값도 일정하고 좋아집니다.",
+
+  "learn_page_basestation_desc": "Space Calibrator은 BLE가 호환되는 Bluetooth 어뎁터가 있을 경우 SteamVR 베이스 스테이션을 조작할 수 있습니다.",
+  "learn_page_basestation_1_title": "베이스 스테이션 1.0",
+  "learn_page_basestation_1_desc": "해당 모델은 키거나 끄기만 할 수 있습니다. 무선으로 채널을 설정할 수 없습니다. 후면에 있는 물리 버튼을 이용하여 채널을 바꿀 수 있습니다.",
+  "learn_page_basestation_2_title": "베이스 스테이션 2.0",
+  "learn_page_basestation_2_desc1": "Valve와 HTC에서 생산되며, 1.0보다 더 나은 무선 설정을 할 수 있습니다. 무선으로 전원을 키거나 끌 수 있으며 채널까지 설정할 수 있습니다. 베이스 스테이션 2.0은 개별적인 채널을 사용해야하며, 그렇지 않을 경우 작동하지 않을 수 있습니다. Space Calibrator는 이것에 대해 고칠 수 있습니다.",
+  "learn_page_basestation_2_desc2": "베이스 스테이션 2.0 채널을 변경하기 위해, 베이스 스테이션 관리 탭으로 들어갑니다. 조작할 베이스 스테이션을 설정하여 원하는 채널을 선택하면 됩니다.(녹색으로 표시됩니다.).",
+  "learn_page_basestation_auto_power_title": "전원 설정",
+  "learn_page_basestation_auto_power_desc": "설정 탭에서 베이스 스테이션 전원 관리를 할 수 있습니다. Space Calibrator가 실행되면 베이스 스테이션이 켜지게 됩니다. 그리고 SteamVR을 끄게 되면 베이스 스테이션이 꺼집니다. (Space Calibrator가 켜져있어야합니다.) 만일 Space Calibrator를 수동으로 먼저 끈 상태에서 SteamVR을 끄게되면 베이스 스테이션이 꺼지지 않습니다.",
+
+  "learn_page_ui_tour_desc": "해당 인터페이스에서 여러 탭이 나뉘어져 있으며 각기 다른 내용을 포함하고 있습니다.",
+  "learn_page_ui_tour_calibration_heading": "보정 탭",
+  "learn_page_ui_tour_cal_desc1": "보정 탭에는 보정에 필요한 설정들이 있습니다. 여러분들은 여기서 보정을 할 수 있습니다.",
+  "learn_page_ui_tour_cal_desc2": "상단에 있는 카드는 보정이 활성화 되어있는지, 어떤 방법으로 보정되어있는지 확인 할 수 있습니다.",
+  "learn_page_ui_tour_cal_desc3": "바로 아래에 있는 것은 보정에 사용할 장치를 선택할 수 있는 구간입니다. 첫번째로 어떠한 트래킹 시스템에서 보정할지 설정해야합니다. 그 뒤에 왼쪽 패널에서 기준 장치를 정하고 오른쪽 패널에서 타켓 장치를 정합니다.",
+  "learn_page_ui_tour_cal_desc4": "그 뒤로 아래에 있는 버튼들은 어떤 방법으로 보정 할지 선택하는 버튼들 입니다. 어떤 보정을 사용해야하는지 모르겠다하면 일반 보정 페이지와 연속 보정 페이지를 읽어보시는걸 권장합니다.",
+  "learn_page_ui_tour_cal_desc5": "그리고 그 아래로 있는 옵션들은 보정에 대한 옵션들을 설정할 수 있으며, 몇몇 옵션들은 고급 설정을 활성화해야 보이게됩니다.",
+  "learn_page_ui_tour_base_stations_heading": "베이스 스테이션 관리 탭",
+  "learn_page_ui_tour_bs_desc": "여기서는 BLE를 지원하는 Bluetooth 어뎁터가 있는 경우 베이스 스테이션들을 관리 할 수 있는 탭입니다. 보통은 초기 설정 이후 해당 부분을 건들일 필요는 없습니다.",
+  "learn_page_ui_tour_settings_heading": "설정 탭",
+  "learn_page_ui_tour_settings_desc1": "여기서는 프로그램에서 광역 설정 할 수 있는 탭입니다. 여기에는 고급 설정, 베이스 스테이션 관리, 그리고 UI언어를 설정 할 수 있습니다.",
+  "learn_page_ui_tour_settings_desc2": "일부 기능들은 고급 설정을 활성화 해야 보이게됩니다. 해당 기능들이 무슨 역할을 하는지 아는 경우에만 활성화 하는것을 권장드립니다.",
+
+  /* Names of the various languages one may select. Shown in settings */
+  "languages_en_GB": "영어 (영국)",
+  "languages_en_US": "영어 (미국)",
+  "languages_fr": "프랑스어",
+  "languages_it": "이탈리아어",
+  "languages_de": "독일어",
+  "languages_nl": "네덜란드어",
+  "languages_es_ES": "스페인어 (스페인)",
+  "languages_es_US": "스페인어 (라틴 아메리카)",
+  "languages_da": "덴마크어",
+  "languages_sv": "스웨덴어",
+  "languages_fi": "필란드어",
+  "languages_no": "노르웨이어",
+  "languages_bg": "불가리아어",
+  "languages_pl": "폴란드어",
+  "languages_cs": "체코어",
+  "languages_el": "그리스어",
+  "languages_hu": "헝가리어",
+  "languages_pt_PT": "포르투갈어 (포르투갈)",
+  "languages_pt_BR": "포르투갈어 (브라질)",
+  "languages_ro": "로마어",
+  "languages_ru": "라시아어",
+  "languages_tr": "튀르키에어",
+  "languages_uk": "우크라이나어",
+  "languages_zh_HANS": "중국어 (간체자)",
+  "languages_zh_HANT": "중국어 (번체자)",
+  "languages_ja": "일본어",
+  "languages_ko": "한국어",
+  "languages_th": "태국어",
+  "languages_vi": "베트남어",
+  "languages_system": "시스템 언어"
+}

@@ -63,7 +63,7 @@ The supported languages right now are:
 - `zh_HANS.json` Chinese (Simplified)
 - `zh_HANT.json` Chinese (Traditional) (missing)
 - `ja.json` Japanese
-- `ko.json` Korean (missing)
+- `ko.json` Korean
 - `th.json` Thai (missing)
 - `vi.json` Vietnamese (missing)
 
