@@ -1543,14 +1543,11 @@ void page_about(double currentTime)
     ImGui::TextHeading(LOCALE_GET("about_licenses_title").c_str());
     ImGui::TextWrapped(LOCALE_GET("about_licenses_description").c_str());
 
-    ImGui::InputTextMultiline(
-        "##licenses_box",
-        g_licenses_text.data(),
-        g_licenses_text.size() + 1,
-        ImVec2(
-            ImGui::GetContentRegionAvail().x,
-            ImMax(ImGui::GetWindowHeight() - ImGui::GetStyle().WindowPadding.y - ImGui::GetTextLineHeightWithSpacing() * 3.0f, ImGui::GetTextLineHeightWithSpacing() * 6.0f)),
-        ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_WordWrap);
+    // throw it in a child container for funny box to make it clear this is a massive read-only block of text
+    if (ImGui::BeginChild("##licenses_box", ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
+        ImGui::TextUnformatted(g_licenses_text.data(), g_licenses_text.data() + g_licenses_text.size());
+    }
+    ImGui::EndChild();
 }
 
 // tutorial page
@@ -1641,7 +1638,7 @@ void page_tutorial(double currentTime)
         ImGui::TextWrapped(LOCALE_GET("learn_page_standard_perform_step3").c_str());
         ImGui::Spacing();
 
-        // video demonstrating calibration method
+        // @TODO: video demonstrating calibration method
         DRAW_IMAGE("calibrate_diagram", EImageId_LearnStandard_CalibrateDiagram);
 
         ImGui::TextHeading(LOCALE_GET("learn_page_standard_speeds_title").c_str());
