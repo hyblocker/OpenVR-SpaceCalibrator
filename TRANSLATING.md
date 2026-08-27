@@ -32,7 +32,9 @@ For example, you can write: `Arg0: {0} arg1: {1}` ; and itll appear as `Arg0: fo
 
 You can experiment with translations by making a `json` file matching a locale string at `<SPACECAL-DIR>/assets/lang/en_GB.json`
 
-Missing strings will fall back to their respective English strings. For example, if you are editing `it.json` and forgot to add the string `reference_space`, the app will show the english value to the user.
+Missing strings will fall back to their respective English strings. For example, if you are editing `it.json` and forgot to add the string `reference_space`, the app will show the English value to the user.
+
+You should also translate the languages block at the bottom of the file. This section is used to present the name of the language to the user in the language selection dropdown in the current language and the language itself. For example, if the user currently has Japanese selected, the entry for French would read as `フランス語 (Français)` in the dropdown.
 
 The supported languages right now are:
 - `en_GB.json` (maintained by me, consider it ground truth)
