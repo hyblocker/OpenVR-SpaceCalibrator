@@ -355,7 +355,7 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
     errorMetrics.posOffset_currentCal.push(currentTime, k_METRIC_HISTORY_TIMESPAN, bApplied ? computedTranslation : calibratedTranslation);
 
     if (eCalibrationError == CalibrationError::None || bForceCalibration) {
-        calibrationError = eCalibrationError;
+        calibrationError = bForceCalibration ? CalibrationError::None : eCalibrationError;
         calibratedRotation = computedRotation;
         calibratedTranslation = computedTranslation;
 
@@ -1170,7 +1170,6 @@ void TrackingSystemCalibration::resetCalibrationForDevice(const CalibrationDevic
 // applies calibration to all devices under this tracking system
 void TrackingSystemCalibration::apply()
 {
-
     // check if the hmd and tracker are both valid before applying a calibration. if one of them is invalid we shouldnt trust the calibration as its most likely stale anyway
     bool calibrationDevicesAreValid = targetDevice.deviceId < vr::k_unMaxTrackedDeviceCount && referenceDevice.deviceId < vr::k_unMaxTrackedDeviceCount;
     if (referenceDevice.deviceId < vr::k_unMaxTrackedDeviceCount) {
