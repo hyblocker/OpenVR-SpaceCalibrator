@@ -479,7 +479,6 @@ void Window::RunLoop()
         }
 
         if (windowVisible || dashboardVisible) {
-
             auto& io = ImGui::GetIO();
 
             // These change state now, so we must execute these before doing our own modifications to the io state for VR
@@ -502,11 +501,7 @@ void Window::RunLoop()
             ImGui::Render();
 
             m_graphicsContext->renderDrawData(ImGui::GetDrawData(), ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-            // if window is not minimised
-            if (width && height) {
-                m_graphicsContext->present(width, height);
-            }
+            m_graphicsContext->present(m_windowWidth, m_windowHeight);
 
             // update vr dashboard if viisble
             if (dashboardVisible) {
