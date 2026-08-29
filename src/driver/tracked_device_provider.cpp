@@ -244,9 +244,9 @@ bool ServerTrackedDeviceProvider::HandleDevicePoseUpdated(vr::TrackedDeviceIndex
     auto& transform = m_transforms[unWhichDevice];
 
     if (transform.hideContinuousTracker()) {
-        modifiedPose.vecPosition[0] = -modifiedPose.vecWorldFromDriverTranslation[0];
-        modifiedPose.vecPosition[1] = -modifiedPose.vecWorldFromDriverTranslation[1] + 9001; // put it 9001m above the origin
-        modifiedPose.vecPosition[2] = -modifiedPose.vecWorldFromDriverTranslation[2];
+        newPose.vecPosition[0] = -newPose.vecWorldFromDriverTranslation[0];
+        newPose.vecPosition[1] = -newPose.vecWorldFromDriverTranslation[1] + 9001; // put it 9001m above the origin
+        newPose.vecPosition[2] = -newPose.vecWorldFromDriverTranslation[2];
     } else if (transform.enabled()) {
         HandleQuirks(transform.quirks, modifiedPose);
 
