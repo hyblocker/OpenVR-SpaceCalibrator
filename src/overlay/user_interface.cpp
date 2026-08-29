@@ -844,6 +844,8 @@ void page_calibration(double currentTime)
                 float width = ImGui::GetContentRegionAvail().x / 3.0f - style.FramePadding.x;
                 float widthF = width - style.FramePadding.x;
 
+                bool bNeedsToUpdateCalibration = false;
+
                 ImGui::BeginDisabled(calibration.isContinuousCalibration());
 
                 ImGui::TextHeading(LOCALE_GET("edit_calibration_rotation").c_str());
@@ -857,11 +859,11 @@ void page_calibration(double currentTime)
                 Eigen::Vector3d calibratedRotationEuler = calibration.calibratedRotation.toRotationMatrix().canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
 
                 ImGui::PushItemWidth(widthF);
-                ImGui::InputDouble("##Yaw", &calibratedRotationEuler(1), 0.1, 1.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Yaw", &calibratedRotationEuler(1), 0.1, 1.0, "%.8f");
                 ImGui::SameLine();
-                ImGui::InputDouble("##Pitch", &calibratedRotationEuler(2), 0.1, 1.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Pitch", &calibratedRotationEuler(2), 0.1, 1.0, "%.8f");
                 ImGui::SameLine();
-                ImGui::InputDouble("##Roll", &calibratedRotationEuler(0), 0.1, 1.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Roll", &calibratedRotationEuler(0), 0.1, 1.0, "%.8f");
 
                 double rollRad = calibratedRotationEuler(0) * (EIGEN_PI / 180.0);
                 double pitchRad = calibratedRotationEuler(2) * (EIGEN_PI / 180.0);
@@ -877,21 +879,27 @@ void page_calibration(double currentTime)
                 ImGui::SameLine();
                 ImGui::TextWithWidth(LOCALE_GET("edit_calibration_z").c_str(), width);
 
-                ImGui::InputDouble("##X", &calibration.calibratedTranslation(0), 1.0, 10.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##X", &calibration.calibratedTranslation(0), 1.0, 10.0, "%.8f");
                 ImGui::SameLine();
-                ImGui::InputDouble("##Y", &calibration.calibratedTranslation(1), 1.0, 10.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Y", &calibration.calibratedTranslation(1), 1.0, 10.0, "%.8f");
                 ImGui::SameLine();
-                ImGui::InputDouble("##Z", &calibration.calibratedTranslation(2), 1.0, 10.0, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Z", &calibration.calibratedTranslation(2), 1.0, 10.0, "%.8f");
 
                 ImGui::EndDisabled();
                 ImGui::PopItemWidth();
 
                 ImGui::TextHeading(LOCALE_GET("edit_calibration_scale").c_str());
 
-                ImGui::InputDouble("##Scale", &calibration.calibratedScale, 0.0001, 0.01, "%.8f");
+                bNeedsToUpdateCalibration = bNeedsToUpdateCalibration || ImGui::InputDouble("##Scale", &calibration.calibratedScale, 0.0001, 0.01, "%.8f");
+
+                // update instantly to show the user the edited calibration
+                if (bNeedsToUpdateCalibration) {
+                    calibration.apply();
+                }
 
                 if (ImGui::Button(LOCALE_GET("save_calibration_profile").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeight() * 2))) {
                     calibration.state = CalibrationState::NONE;
+                    calibration.apply();
                     ConfigurationManager::getInstance()->saveConfiguration();
                 }
             } else {
