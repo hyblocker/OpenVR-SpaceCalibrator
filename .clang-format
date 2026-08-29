@@ -135,7 +135,7 @@ IntegerLiteralSeparator:
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
 LambdaBodyIndentation: Signature
-LineEnding: LF
+LineEnding: CRLF
 MacroBlockBegin: ""
 MacroBlockEnd: ""
 MaxEmptyLinesToKeep: 1

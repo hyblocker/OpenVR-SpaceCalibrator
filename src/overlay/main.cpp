@@ -161,7 +161,6 @@ int entry_point(int argc, char* argv[])
 #if OS_WINDOWS
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-
     // need to convert from UTF16-LE to UTF8 bc windows is special
     int argc;
     LPWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &argc);

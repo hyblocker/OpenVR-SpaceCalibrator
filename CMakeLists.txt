@@ -81,5 +81,11 @@ if (UNIX AND NOT APPLE)
     SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
+# add editorconfig to vcxprojs
+if (WIN32)
+	add_custom_target(FormattingRules SOURCES "${CMAKE_SOURCE_DIR}/.editorconfig" "${CMAKE_SOURCE_DIR}/.clang-format")
+	set_property(TARGET FormattingRules PROPERTY FOLDER "Solution Items")
+endif()
+
 # Include project
 add_subdirectory ("src")
