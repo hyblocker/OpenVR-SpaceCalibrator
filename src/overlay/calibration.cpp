@@ -728,6 +728,7 @@ void TrackingSystemCalibration::reset()
     m_lastRefWorldFromDriverTrans = Eigen::Vector3d::Constant(NAN);
     m_lastTargetWorldFromDriverTrans = Eigen::Vector3d::Constant(NAN);
 
+    m_shouldForceCalibrateNextTime = true;
     updateRotationVarianceCosineThreshold();
 }
 
@@ -773,7 +774,7 @@ void TrackingSystemCalibration::startContinuous()
 void TrackingSystemCalibration::updateRotationVarianceCosineThreshold()
 {
     const double range_rad = k_ROTATION_VARIANCE_TARGET_DEGREES * (M_PI / 180.0);
-    const double min_angle_rad = range_rad / (1.2 * cbrt((double)getSampleCount()));
+    double min_angle_rad = range_rad / (1.2 * cbrt((double)getSampleCount()));
     m_rotationVarianceCosineThreshold = cos(min_angle_rad / 2.0);
 }
 
@@ -991,7 +992,7 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
             break;
         }
         case CalibrationState::CONTINUOUS: {
-            if (computeCalibrationOneshot(currentTime, false) == CalibrationError::None) {
+            if (computeCalibrationOneshot(currentTime, m_shouldForceCalibrateNextTime) == CalibrationError::None) {
                 LOG_CALIB_INFO("Finished continuous calibration, profile saved");
             }
 
@@ -1000,6 +1001,7 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
             m_samples.erase(m_samples.begin(), m_samples.begin() + dwEraseSampleSize);
 
             // state should remain as continuous
+            m_shouldForceCalibrateNextTime = false;
             break;
         }
         default:
