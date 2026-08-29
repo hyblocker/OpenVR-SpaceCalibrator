@@ -928,7 +928,6 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
             return;
         }
 
-        resetCalibrationForDevice(targetDevice);
         if (state == CalibrationState::CONTINUOUS_IDLE) {
             state = CalibrationState::CONTINUOUS;
             LOG_CALIB_INFO("Starting continuous calibration...");
