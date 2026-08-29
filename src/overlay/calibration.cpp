@@ -720,10 +720,6 @@ void TrackingSystemCalibration::reset()
     LOG_CALIB_INFO("Resetting calibration...");
     m_samples.clear();
     m_sampleHistory.clear();
-    // @NOTE: should we do this? need to compare with live behaviour
-    calibratedRotation = Eigen::Quaterniond::Identity();
-    calibratedTranslation = Eigen::Vector3d::Zero();
-    calibratedScale = 1.0;
 
     m_lastRmsError = INFINITY;
     m_lastAxisVariance = 0.0;
@@ -733,6 +729,19 @@ void TrackingSystemCalibration::reset()
     m_lastTargetWorldFromDriverTrans = Eigen::Vector3d::Constant(NAN);
 
     updateRotationVarianceCosineThreshold();
+}
+
+void TrackingSystemCalibration::clearCurrentCalibration()
+{
+    LOG_CALIB_INFO("Clearing calibration to identity...");
+    calibrationError = CalibrationError::Unknown;
+    calibratedRotation = Eigen::Quaterniond::Identity();
+    calibratedTranslation = Eigen::Vector3d::Zero();
+    calibratedScale = 1.0;
+
+    // commit it to show the user that the current calibration got nuked
+    apply();
+    CalibrationManager::getInstance()->saveConfig();
 }
 
 void TrackingSystemCalibration::start()

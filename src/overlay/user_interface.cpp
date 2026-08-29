@@ -327,6 +327,7 @@ inline void buildCalibrationCommonControls(spacecal::TrackingSystemCalibration& 
     if (calibration.isValidCalibration()) {
         ImGui::SameLine();
         if (ImGui::IconButton(ICON_MS_CLOSE, LOCALE_GET("calibration_action_clear").c_str(), ImVec2(width * scale, ImGui::GetTextLineHeight() * 2))) {
+            calibration.clearCurrentCalibration();
             calibration.reset();
         }
 

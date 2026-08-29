@@ -137,6 +137,7 @@ public:
     void start();
     void startContinuous();
     void reset();
+    void clearCurrentCalibration();
 
     // clears samples and updates cosine threshold (for ill-varied sample rejection)
     inline void clearSamples()
