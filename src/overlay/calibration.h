@@ -301,6 +301,7 @@ private:
     vr::TrackedDeviceIndex_t m_candidateRefId = vr::k_unTrackedDeviceIndexInvalid;
     vr::TrackedDeviceIndex_t m_candidateTargetId = vr::k_unTrackedDeviceIndexInvalid;
     double m_autoDetectSpeeds[vr::k_unMaxTrackedDeviceCount] = {};
+    bool m_shouldForceCalibrateNextTime = true;
 
     // for detecting if a device jumps from one playspace to another
     Eigen::Quaterniond m_lastRefWorldFromDriverRot = Eigen::Quaterniond::Identity();
