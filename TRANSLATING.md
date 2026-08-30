@@ -41,7 +41,7 @@ The supported languages right now are:
 - `en_US.json` English (US)
 - `fr.json` French
 - `it.json` Italian
-- `de.json` German (missing)
+- `de.json` German
 - `nl.json` Dutch (missing)
 - `es_ES.json` Spanish (Spain)
 - `es_US.json` Spanish (Latin America) (missing)
