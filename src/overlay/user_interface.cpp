@@ -83,7 +83,7 @@ inline void buildDeviceSelection(spacecal::TrackingSystemCalibration& calibratio
         }
     }
 
-    bool standby = calibration.state == CalibrationState::CONTINUOUS_IDLE;
+    bool standby = calibration.isContinuousCalibration();
 
     // select the left controller, or the first device that makes sense to select
     if (selected == vr::k_unTrackedDeviceIndexInvalid && !standby) {
