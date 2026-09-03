@@ -1,16 +1,16 @@
 #include "calibration.h"
-#include "Eigen/Core"
-#include "Eigen/Geometry"
 #include "config/configuration_data_versions.h"
 #include "configuration.h"
 #include "constants.h"
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 #include "log.h"
 #include "openvr.h"
 #include "platform.h"
 #include "util.h"
 #include "vr_core.h"
-#include <GLFW/glfw3.h>
 #include <cmath>
+#include <GLFW/glfw3.h>
 #include <math.h>
 
 namespace spacecal {

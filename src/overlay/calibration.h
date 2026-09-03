@@ -5,8 +5,8 @@
 #include "protocol.h"
 #include "time_series.h"
 #include "vr_core.h"
-#include <Eigen/Dense>
 #include <deque>
+#include <Eigen/Dense>
 
 namespace spacecal {
 
@@ -197,6 +197,7 @@ public:
     {
         m_lastRmsError = INFINITY;
         m_lastAxisVariance = 0.0;
+        m_shouldForceCalibrateNextTime = true;
     }
 
 public:
