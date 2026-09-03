@@ -261,6 +261,11 @@ void VRState::updateVrState()
             }
         }
 
+        // device props may have just become avail, attempt to retry assigning devices to handle
+        for (size_t i = 0; i < CalibrationManager::getInstance()->getCalibrationCount(); i++) {
+            CalibrationManager::getInstance()->getCalibration(i).tryAssigningTargets();
+        }
+
         // an event that matters happened, re-apply calibration for good measure!
         CalibrationManager::getInstance()->apply();
     }
@@ -273,11 +278,6 @@ void VRState::updateVrState()
         case vr::EVREventType::VREvent_TrackedDeviceActivated: {
             LOG_OPENVR_INFO("New device connected at index {}", vrEvent.trackedDeviceIndex);
             updateSteamVRDevice(vrEvent.trackedDeviceIndex);
-
-            for (size_t i = 0; i < CalibrationManager::getInstance()->getCalibrationCount(); i++) {
-                CalibrationManager::getInstance()->getCalibration(i).tryAssigningTargets();
-            }
-
             m_bStateDirty = true;
             break;
         }
