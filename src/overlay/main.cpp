@@ -87,6 +87,9 @@ int entry_point(int argc, char* argv[])
     spacecal::LocalisationManager localisationManager;
     localisationManager.init();
 
+    // Initialise base station management
+    spacecal::bluetooth::init_base_station_management();
+
     // Init SteamVR
     spacecal::VRState vrState;
     if (!vrState.init()) {
@@ -113,9 +116,6 @@ int entry_point(int argc, char* argv[])
 
     // init calibration manager or else instance will be nullptr
     spacecal::CalibrationManager* pCalibrationManager = new spacecal::CalibrationManager;
-
-    // Initialise base station management
-    spacecal::bluetooth::init_base_station_management();
 
     // load license text
     std::string szLicensesPath = (util::getSpaceCalibratorInstallDir() / "LICENSE").string();

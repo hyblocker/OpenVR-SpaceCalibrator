@@ -114,9 +114,9 @@ bool VRState::init()
     // @TODO: log hmd info
 
     // start base stations on startup if enabled
-    if (ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_power_management_enabled && ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_turn_on_during_startup) {
-        bluetooth::set_all_base_station_power_state(bluetooth::PowerState_Awake_From_Sleep);
-    }
+    m_bNeedsToPowerOnBaseStations =
+        ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_power_management_enabled &&
+        ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_turn_on_during_startup;
 
     m_bIsSteamVrAvailable = true;
     return true;
@@ -268,6 +268,10 @@ void VRState::updateVrState()
 
         // an event that matters happened, re-apply calibration for good measure!
         CalibrationManager::getInstance()->apply();
+
+        if (m_bNeedsToPowerOnBaseStations) {
+            m_bNeedsToPowerOnBaseStations = !bluetooth::set_all_base_station_power_state(bluetooth::PowerState_Awake_From_Sleep);
+        }
     }
 
     vr::VREvent_t vrEvent = {};

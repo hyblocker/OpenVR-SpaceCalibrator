@@ -64,6 +64,7 @@ private:
     static VRState* s_instance;
     bool m_bIsSteamVrAvailable = true;
     bool m_bStateDirty = true;
+    bool m_bNeedsToPowerOnBaseStations = false;
     vr::EVRInitError m_eVrInitError = vr::EVRInitError::VRInitError_None;
     vr::VROverlayHandle_t m_overlayMainHandle = vr::k_ulOverlayHandleInvalid;
     vr::VROverlayHandle_t m_overlayThumbnailHandle = vr::k_ulOverlayHandleInvalid;

@@ -1061,7 +1061,7 @@ namespace bluetooth {
             bResult = bResult && set_base_station_power_state(i, state);
         }
 
-        return bResult;
+        return bResult && dwBaseStationCount > 0;
     }
 
     bool auto_assign_base_station_channels()
