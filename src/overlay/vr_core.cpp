@@ -7,7 +7,13 @@
 #include "log.h"
 #include "platform.h"
 #include "util.h"
+
+BEGIN_EXTERNAL_HEADERS
+#include <filesystem>
 #include <fmt/format.h>
+#include <glaze/glaze.hpp>
+
+END_EXTERNAL_HEADERS
 
 namespace spacecal {
 
@@ -239,7 +245,6 @@ bool VRState::updateSteamVRDevice(const vr::TrackedDeviceIndex_t deviceId)
 
 void VRState::updateVrState()
 {
-
     if (!m_bIsSteamVrAvailable)
         return;
 
@@ -553,4 +558,222 @@ void VRState::debugListDevices() const
         LOG_OPENVR_INFO("Device [{}] : {} {} {} ({})", i, device.szTrackingSystemId, device.szModel, device.szSerial, device.eDeviceClass);
     }
 }
+// @TODO: Proper linux path
+void VRState::tryLoadVrPaths()
+{
+    if (m_openvrPaths.version != 0) {
+        return;
+    }
+    auto vrPath = platform::getSteamvrVrPathsPath();
+
+    constexpr glz::opts options {
+        .comments = true,
+        .error_on_unknown_keys = false,
+        .error_on_missing_keys = false,
+        .error_on_const_read = false
+    };
+
+    // Get data version to decode config correctly
+    std::string jsonConfigRaw;
+    if (jsonConfigRaw.empty()) {
+        FILE* pFile = fopen(vrPath.string().c_str(), "rb");
+        fseek(pFile, 0, SEEK_END);
+        size_t fileSize = ftell(pFile);
+        jsonConfigRaw.resize(fileSize);
+        rewind(pFile);
+        fread(&jsonConfigRaw[0], 1, fileSize, pFile);
+        fclose(pFile);
+    }
+
+    glz::error_ctx deserialiseErrorVersion = glz::read<glz::set_json<options>()>(m_openvrPaths, std::forward<std::string>(jsonConfigRaw), glz::context {});
+    if (deserialiseErrorVersion.ec != glz::error_code::none) {
+        // FUCK
+        LOG_WARNING("Failed to parse openvrpaths.vrpath file \"{0}\". {1}", vrPath.string(), deserialiseErrorVersion.custom_error_message);
+        m_openvrPaths.version = 0;
+        return;
+    }
+}
+
+#if OS_WINDOWS
+#define DRIVER_ARCH_DIR "win64"
+#elif OS_LINUX
+#if ARCH_X64
+#define DRIVER_ARCH_DIR "linux64"
+#elif ARCH_AARCH64
+#define DRIVER_ARCH_DIR "linuxarm64"
+#else
+#error "Unknown CPU arch"
+#endif
+#else
+#error "Unsupported OS"
+#endif
+
+bool VRState::isConflictingDriverInstalled()
+{
+    tryLoadVrPaths();
+    if (m_openvrPaths.version == 0) {
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::path exeDir = platform::getExeDir();
+
+    // exeDir should match driverDir via external_drivers under a good install
+
+    // check drivers dir for spacecal entry in steamvr dir
+    for (const std::string& szEntry : m_openvrPaths.runtime) {
+        std::filesystem::path driversDir = std::filesystem::path(szEntry) / "drivers";
+        if (!std::filesystem::exists(driversDir, ec))
+            continue;
+        for (const auto& entry : std::filesystem::directory_iterator(driversDir)) {
+            if (std::filesystem::is_regular_file(entry.path() / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll")) {
+                return true;
+            }
+        }
+    }
+
+    // check external drivers dirs for spacecal entry in steamvr dir
+    for (const std::string& szEntry : m_openvrPaths.external_drivers) {
+        std::filesystem::path driverDir = std::filesystem::path(szEntry);
+        if (!std::filesystem::exists(driverDir, ec))
+            continue;
+        if (std::filesystem::is_regular_file(driverDir / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll", ec)) {
+            return driverDir != exeDir;
+        }
+    }
+
+    return false;
+}
+
+bool VRState::isSpaceCalibratorDriverAvailable()
+{
+    tryLoadVrPaths();
+    if (m_openvrPaths.version == 0) {
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::path exeDir = platform::getExeDir();
+    // exeDir should match driverDir via external_drivers under a good install
+
+    // check external drivers dirs for spacecal entry in steamvr dir
+    for (const std::string& szEntry : m_openvrPaths.external_drivers) {
+        std::filesystem::path driverDir = std::filesystem::path(szEntry);
+        if (!std::filesystem::exists(driverDir, ec))
+            continue;
+        if (std::filesystem::is_regular_file(driverDir / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll", ec)) {
+            return driverDir == exeDir;
+        }
+    }
+
+    return false;
+}
+
+bool VRState::removeConflictingDrivers()
+{
+    tryLoadVrPaths();
+    if (m_openvrPaths.version == 0) {
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::path exeDir = platform::getExeDir();
+    // exeDir should match driverDir via external_drivers under a good install
+
+    bool bSuccess = true;
+
+    // check drivers dir for spacecal entry in steamvr dir
+    for (const std::string& szEntry : m_openvrPaths.runtime) {
+        std::filesystem::path driversDir = std::filesystem::path(szEntry) / "drivers";
+        if (!std::filesystem::exists(driversDir, ec))
+            continue;
+        for (const auto& entry : std::filesystem::directory_iterator(driversDir)) {
+            if (std::filesystem::is_regular_file(entry.path() / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll", ec)) {
+
+                for (const auto& dir_entry : std::filesystem::recursive_directory_iterator(entry.path())) {
+#if OS_WINDOWS
+                    // queue the thing for deletion
+                    bSuccess = bSuccess && MoveFileExW(dir_entry.path().wstring().c_str(), NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+#elif OS_LINUX
+// @TODO: idk???
+#else
+#endif
+                }
+            }
+        }
+    }
+
+    // remove entries of spacecal from external_drivers
+    std::erase_if(m_openvrPaths.external_drivers, [exeDir](const std::string& szEntry) {
+        std::error_code ec;
+        std::filesystem::path driverDir(szEntry);
+
+        return (driverDir != exeDir) && // is not this install of spacecal
+            std::filesystem::exists(driverDir, ec) && // folder exists
+            std::filesystem::is_regular_file(driverDir / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll", ec); // is a valid spacecal driver
+    });
+
+    auto vrPath = platform::getSteamvrVrPathsPath().string();
+    constexpr glz::opts options {
+        .comments = false,
+        .error_on_unknown_keys = false,
+        .prettify = true,
+        .indentation_char = ' ',
+        .indentation_width = 4,
+        .error_on_missing_keys = false,
+        .error_on_const_read = false,
+    };
+    glz::error_ctx serialiseError = glz::write_file_json<options>(m_openvrPaths, vrPath.c_str(), std::string {});
+    if (serialiseError.ec != glz::error_code::none) {
+        // FUCK
+        LOG_WARNING("Failed to write openvrpaths file \"{0}\". {1}", vrPath, serialiseError.custom_error_message);
+        return false;
+    }
+    return bSuccess;
+}
+
+bool VRState::registerSpaceCalibratorDriver()
+{
+    tryLoadVrPaths();
+    if (m_openvrPaths.version == 0) {
+        return false;
+    }
+    std::error_code ec;
+    std::filesystem::path exeDir = platform::getExeDir();
+
+    // add exeDir to runtime paths IF and ONLY IFF exeDir is NOT already present
+
+    // check external drivers dirs for spacecal entry in steamvr dir
+    bool bDriverIsInstalledAlready = false;
+    for (const std::string& szEntry : m_openvrPaths.external_drivers) {
+        std::filesystem::path driverDir = std::filesystem::path(szEntry);
+        if (!std::filesystem::exists(driverDir, ec))
+            continue;
+        if (std::filesystem::is_regular_file(driverDir / "bin" / DRIVER_ARCH_DIR / "driver_01spacecalibrator.dll", ec)) {
+            bDriverIsInstalledAlready = bDriverIsInstalledAlready || (driverDir == exeDir);
+        }
+    }
+
+    if (bDriverIsInstalledAlready == false) {
+        m_openvrPaths.external_drivers.push_back(exeDir.string());
+
+        auto vrPath = platform::getSteamvrVrPathsPath().string();
+        constexpr glz::opts options {
+            .comments = false,
+            .error_on_unknown_keys = false,
+            .prettify = true,
+            .indentation_char = ' ',
+            .indentation_width = 4,
+            .error_on_missing_keys = false,
+            .error_on_const_read = false,
+        };
+        glz::error_ctx serialiseError = glz::write_file_json<options>(m_openvrPaths, vrPath.c_str(), std::string {});
+        if (serialiseError.ec != glz::error_code::none) {
+            // FUCK
+            LOG_WARNING("Failed to write openvrpaths file \"{0}\". {1}", vrPath, serialiseError.custom_error_message);
+            return false;
+        }
+        return true;
+    }
+
+    return true;
+}
+
 }

@@ -9,6 +9,8 @@
   "vr_troubleshooting_hmd_not_found": "Please connect your VR headset and launch SteamVR first.",
   "vr_troubleshooting_connect_steamlink": "Please open SteamLink on your VR headset and connect to SteamVR first.",
   "vr_troubleshooting_generic": "Please connect your VR headset and launch SteamVR first. ({0} {1})", /* 0 : SteamVR init error (eg 108), 1 : SteamVR init error string (eg Headset not connected) - this string is provided by Steam. */
+  "ipc_unvailable_auto_fix": "Try to fix",
+  "ipc_unvailable_auto_fix_note_reboot": "Please restart your computer for the changes to take affect.",
 
   "calibration_title": "Calibration",
   "calibration_count_none": "No Calibration. Please create a new calibration to get started.", // Shown when there are no calibrations active

@@ -30,8 +30,18 @@
 #error "Unknown compiler"
 #endif
 
+#if defined(_M_X64) || defined(__x86_64__)
+#define ARCH_X64 1
+#define ARCH_AARCH64 0
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#define ARCH_X64 0
+#define ARCH_AARCH64 1
+#else
+#error "Unsupported architecture"
+#endif
+
 // warning guards for various compilers
-#if defined(__clang__)
+#if COMPILER_CLANG
 #define BEGIN_EXTERNAL_HEADERS \
     __pragma(clang diagnostic push) \
     __pragma(clang diagnostic ignored "-Weverything") \
@@ -39,13 +49,13 @@
 #define END_EXTERNAL_HEADERS \
     __pragma(warning(pop)) \
     __pragma(clang diagnostic pop)
-#elif defined(_MSC_VER)
+#elif COMPILER_MSVC
 #define BEGIN_EXTERNAL_HEADERS \
     __pragma(warning(push, 0)) \
     __pragma(warning(disable : 4668)) // #if FOO warns if FOO is not defined; some libs are written like that :(
 #define END_EXTERNAL_HEADERS \
     __pragma(warning(pop))
-#elif defined(__GNUC__)
+#elif COMPILER_GCC
 #define BEGIN_EXTERNAL_HEADERS \
     _Pragma("GCC diagnostic push") \
     _Pragma("GCC diagnostic ignored \"-Wall\"") \
@@ -62,6 +72,7 @@ namespace platform {
 // %APPDATA% or ~/.config
 std::filesystem::path getUserConfigDir();
 std::filesystem::path getExeDir();
+std::filesystem::path getSteamvrVrPathsPath();
 
 std::string getEnvVariable(const std::string& szEnvVarName);
 

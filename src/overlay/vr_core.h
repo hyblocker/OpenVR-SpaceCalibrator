@@ -41,9 +41,24 @@ public:
     [[nodiscard]] inline vr::EVRInitError getVrInitError() const { return m_eVrInitError; }
     [[nodiscard]] inline ipc::protocol::SharedData_HmdMetadata getHmdMeta() const { return m_hmdMetadata; }
 
+    bool isConflictingDriverInstalled();
+    bool isSpaceCalibratorDriverAvailable();
+    bool removeConflictingDrivers();
+    bool registerSpaceCalibratorDriver();
+
 private:
     bool updateSteamVRDevice(const vr::TrackedDeviceIndex_t deviceId);
     void invalidateAllSamples(); // private helper
+    void tryLoadVrPaths();
+
+    struct OpenVRPaths {
+        std::vector<std::string> config;
+        std::vector<std::string> external_drivers;
+        std::string jsonid;
+        std::vector<std::string> log;
+        std::vector<std::string> runtime;
+        int version = 0;
+    };
 
 private:
     static VRState* s_instance;
@@ -56,6 +71,8 @@ private:
     ipc::protocol::SharedData_HmdMetadata m_lastHmdMetaState = {};
     VRDevice_t m_aDevices[vr::k_unMaxTrackedDeviceCount] = {};
     std::vector<std::string> m_aTrackingSystems;
+
+    OpenVRPaths m_openvrPaths;
 
     friend class ::ipc::IpcClient; // for m_hmdMetadata
 };

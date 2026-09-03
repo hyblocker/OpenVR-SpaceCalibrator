@@ -415,6 +415,16 @@ inline void drawTroubleshootView()
         }
     } else if (!CalibrationManager::getInstance()->getIpcClient().IsConnected()) {
         ImGui::TextWrapped("%s", LOCALE_GET("ipc_unavailable").c_str());
+
+        if (VRState::getInstance()->isSpaceCalibratorDriverAvailable() && VRState::getInstance()->isConflictingDriverInstalled()) {
+            if (ImGui::Button(fmt::format("{} {}", ICON_MS_CONSTRUCTION, LOCALE_GET("ipc_unvailable_auto_fix")).c_str())) {
+                VRState::getInstance()->removeConflictingDrivers();
+                VRState::getInstance()->registerSpaceCalibratorDriver();
+            }
+        }
+
+        ImGui::TextWrappedDisabled(LOCALE_GET("ipc_unvailable_auto_fix_note_reboot").c_str());
+
     } else {
         ImGui::TextWrapped("%s", LOCALE_GET("error_unknown_catastrophic").c_str());
     }

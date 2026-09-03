@@ -15,7 +15,6 @@
 namespace platform {
 std::filesystem::path getUserConfigDir()
 {
-
     PWSTR path_pwstr = NULL;
     HRESULT hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path_pwstr);
 
@@ -34,6 +33,21 @@ std::filesystem::path getExeDir()
     DWORD size = GetModuleFileNameW(NULL, path_buf, MAX_PATH);
     if (size > 0 && size <= MAX_PATH) {
         return std::filesystem::path(path_buf).parent_path();
+    }
+
+    return std::filesystem::path();
+}
+
+// %LOCALAPPDATA%/openvr/openvrpaths.vrpath
+std::filesystem::path getSteamvrVrPathsPath()
+{
+
+    PWSTR path_pwstr = NULL;
+    HRESULT hr = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path_pwstr);
+    if (SUCCEEDED(hr)) {
+        auto thePath = std::filesystem::path(path_pwstr) / "openvr" / "openvrpaths.vrpath";
+        CoTaskMemFree(path_pwstr);
+        return thePath;
     }
 
     return std::filesystem::path();

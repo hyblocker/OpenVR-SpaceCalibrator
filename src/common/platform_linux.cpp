@@ -85,6 +85,35 @@ std::filesystem::path getExeDir()
     return exePath.parent_path();
 }
 
+std::filesystem::path getSteamvrVrPathsPath()
+{
+    // ~/.config/openvr/openvrpaths.vrpath
+
+    // based on XDG base dir spec for XDG_CONFIG_HOME
+    // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+    const char* szXdgConfigHome = getenv("XDG_CONFIG_HOME");
+
+    if (szXdgConfigHome != nullptr && szXdgConfigHome[0] != '\0') {
+        return std::filesystem::path(szXdgConfigHome) / "openvr" / "openvrpaths.vrpath";
+    }
+
+    szXdgConfigHome = getenv("HOME");
+    if (szXdgConfigHome != nullptr && szXdgConfigHome[0] != '\0') {
+        return std::filesystem::path(szXdgConfigHome) / ".config" / "openvr" / "openvrpaths.vrpath";
+    }
+
+    struct passwd* user_db_entry = getpwuid(getuid());
+    if (user_db_entry) {
+        szXdgConfigHome = user_db_entry->pw_dir;
+    }
+    if (szXdgConfigHome != nullptr && szXdgConfigHome[0] != '\0') {
+        return std::filesystem::path(szXdgConfigHome) / ".config" / "openvr" / "openvrpaths.vrpath";
+    }
+
+    return std::filesystem::path();
+}
+
 std::string getEnvVariable(const std::string& szEnvVarName)
 {
     const char* szEnvVar = std::getenv(szEnvVarName.c_str());
