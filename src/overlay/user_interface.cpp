@@ -1524,17 +1524,26 @@ void page_about(double currentTime)
 
     ImGui::TextHeading(LOCALE_GET("about_translators_title").c_str());
     ImGui::TextWrapped(LOCALE_GET("about_translators_description").c_str());
-    ImGui::BulletText("hekky");
-    ImGui::BulletText("Hash");
-    ImGui::BulletText("lenr");
-    ImGui::BulletText("CucumberWorks");
-    ImGui::BulletText("shau");
-    ImGui::BulletText("nym (qqq10)");
-    ImGui::BulletText("m3gagluk");
-    ImGui::BulletText("Flippy");
-    ImGui::BulletText("Nara");
-    ImGui::BulletText("C'Ya");
-    ImGui::BulletText("Dem01nS");
+
+    if (ImGui::BeginTable("credits_table", 2, ImGuiTableFlags_None)) {
+        ImGui::TableNextColumn();
+        ImGui::BulletText("hekky");
+        ImGui::BulletText("Hash");
+        ImGui::BulletText("lenr");
+        ImGui::BulletText("CucumberWorks");
+        ImGui::BulletText("shau");
+        ImGui::BulletText("nym (qqq10)");
+        ImGui::BulletText("m3gagluk");
+
+        ImGui::TableNextColumn();
+        ImGui::BulletText("Flippy");
+        ImGui::BulletText("Nara");
+        ImGui::BulletText("C'Ya");
+        ImGui::BulletText("Dem01nS");
+        ImGui::BulletText("Lorcy");
+        ImGui::BulletText("KaiaKiuti");
+    }
+    ImGui::EndTable();
 
     ImGui::Dummy(ImVec2(0, k_SPACING));
 
