@@ -442,6 +442,22 @@ void VRState::updateVrState()
         case vr::EVREventType::VREvent_OverlayCreated:
         case vr::EVREventType::VREvent_OverlayDestroyed:
 
+        case vr::EVREventType::VREvent_OverlayShown:
+        case vr::EVREventType::VREvent_OverlayHidden:
+        case vr::EVREventType::VREvent_DashboardActivated:
+        case vr::EVREventType::VREvent_DashboardDeactivated:
+        case vr::EVREventType::VREvent_ResetDashboard:
+        case vr::EVREventType::VREvent_ImageLoaded:
+        case vr::EVREventType::VREvent_ShowKeyboard:
+        case vr::EVREventType::VREvent_HideKeyboard:
+        case vr::EVREventType::VREvent_OverlayGamepadFocusGained:
+        case vr::EVREventType::VREvent_OverlayGamepadFocusLost:
+        case vr::EVREventType::VREvent_OverlaySharedTextureChanged:
+        case vr::EVREventType::VREvent_ScreenshotTriggered:
+        case vr::EVREventType::VREvent_ImageFailed:
+        case vr::EVREventType::VREvent_DashboardOverlayCreated:
+        case vr::EVREventType::VREvent_SwitchGamepadFocus:
+
         case vr::EVREventType::VREvent_TrackedDeviceUserInteractionStarted:
         case vr::EVREventType::VREvent_TrackedDeviceUserInteractionEnded:
             break;
