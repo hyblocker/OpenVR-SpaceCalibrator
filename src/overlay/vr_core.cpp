@@ -465,13 +465,14 @@ void VRState::updateVrState()
         case vr::EVREventType::VREvent_TrackedDeviceUserInteractionStarted:
         case vr::EVREventType::VREvent_TrackedDeviceUserInteractionEnded:
             break;
-        case vr::EVREventType::VREvent_Quit: {
+        case vr::EVREventType::VREvent_QuitAcknowledged:
+        case vr::EVREventType::VREvent_DriverRequestedQuit:
             // turn off base stations at vr shutdown if enabled
             if (ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_power_management_enabled && ConfigurationManager::getInstance()->getConfiguration()->base_stations.auto_turn_off_during_shutdown) {
                 bluetooth::EPowerState_t ePowerState = ConfigurationManager::getInstance()->getConfiguration()->base_stations.off_should_use_standby ? bluetooth::PowerState_Standby : bluetooth::PowerState_Sleep;
                 bluetooth::set_all_base_station_power_state(ePowerState);
             }
-        } break;
+            break;
 
         default:
             LOG_OPENVR_INFO("Unknown evt with id {}", vrEvent.eventType);
