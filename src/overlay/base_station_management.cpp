@@ -874,9 +874,9 @@ namespace bluetooth {
         }
 
         // the LE_SCAN_REQUEST struct varies across windows version so fuck it try all of them lmao
-        LE_SCAN_REQUEST_WIN11 scanReqWin11 = { .scan_type = 0, .scan_window = 29, .scan_interval = 29 };
-        LE_SCAN_REQUEST_WIN10 scanReqWin10 = { .scan_type = 0, .scan_window = 29, .scan_interval = 29 };
-        LE_SCAN_REQUEST_ORIG scanReqLegacy = { .scan_type = 0, .scan_window = 29, .scan_interval = 29 };
+        LE_SCAN_REQUEST_WIN11 scanReqWin11 = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
+        LE_SCAN_REQUEST_WIN10 scanReqWin10 = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
+        LE_SCAN_REQUEST_ORIG scanReqLegacy = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
 
         if (!_try_scan_device_io_control(hBtRadio, ov, &scanReqWin11, sizeof(scanReqWin11))) {
             if (!_try_scan_device_io_control(hBtRadio, ov, &scanReqWin10, sizeof(scanReqWin10))) {
