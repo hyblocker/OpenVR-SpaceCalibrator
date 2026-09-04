@@ -27,7 +27,7 @@ constexpr double k_ROTATION_ANGLE_THRESHOLD = 0.4;
 constexpr double k_ROTATION_MAGNITUDE_THRESHOLD = 0.1;
 constexpr double k_ROTATION_MIN_VARIANCE = 0.15; // @TODO: fine tune
 constexpr double k_TRANSLATION_MIN_MOTION_THRESHOLD = 0.01; // @TODO: fine tune
-constexpr double k_TRANSLATION_MAX_AMPLIFIED_NOISE_FACTOR = 2.5; // @TODO: fine tune
+constexpr double k_TRANSLATION_MAX_AMPLIFIED_NOISE_FACTOR = 3.0; // @TODO: fine tune
 constexpr size_t k_MIN_DELTA_SAMPLE_COUNT = 200;
 constexpr double k_ROTATION_VARIANCE_TARGET_DEGREES = 14.0; // how much rotation variance to enforce in degrees
 
