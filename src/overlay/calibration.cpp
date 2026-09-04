@@ -141,8 +141,9 @@ TrackingSystemCalibration::DeltaSample_t TrackingSystemCalibration::deltaRotatio
     return ds;
 }
 
-Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vector<Sample_t>& samples)
+Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vector<Sample_t>& samples, CalibrationError& eCalibrationError)
 {
+    eCalibrationError = CalibrationError::None;
     std::vector<DeltaSample_t> deltas;
 
     for (size_t i = 0; i < samples.size(); i++) {
@@ -156,7 +157,7 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
 
     if (deltas.size() < k_MIN_DELTA_SAMPLE_COUNT) {
         LOG_CALIB_WARN("Not enough valid delta samples! Aborting calibration...");
-        return Eigen::Quaterniond(0, 0, 0, 0);
+        eCalibrationError = CalibrationError::LackOfRotationalVariance;
     }
 
     // Kabsch algorithm
@@ -171,7 +172,7 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
     auto svd = crossCV.bdcSvd<Eigen::ComputeThinU | Eigen::ComputeThinV>();
     if (svd.info() != Eigen::Success) {
         LOG_CALIB_WARN("Failed to compute rotational SVD! Aborting calibration...");
-        return Eigen::Quaterniond(0, 0, 0, 0);
+        eCalibrationError = CalibrationError::LackOfRotationalVariance;
     }
 
     Eigen::Vector3d singularValues = svd.singularValues();
@@ -179,7 +180,7 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
 
     if (conditionNumber < k_ROTATION_MIN_VARIANCE) {
         LOG_CALIB_WARN("Not enough rotational variance in collected samples! Got {:.3f}, expected minimum {:.3f} variance. Aborting calibration...", conditionNumber, k_ROTATION_MIN_VARIANCE);
-        return Eigen::Quaterniond(0, 0, 0, 0);
+        eCalibrationError = CalibrationError::LackOfRotationalVariance;
     }
 
     Eigen::Matrix3d i = Eigen::Matrix3d::Identity();
@@ -195,12 +196,16 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
 
     Eigen::Vector3d euler = rot.canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
 
-    LOG_CALIB_INFO("Calibrated rotation (deg): yaw={:.2f} pitch={:.2f} roll={:.2f}", euler[1], euler[2], euler[0]);
+    if (eCalibrationError == CalibrationError::None) {
+        LOG_CALIB_INFO("Calibrated rotation (deg): yaw={:.2f} pitch={:.2f} roll={:.2f}", euler[1], euler[2], euler[0]);
+    }
     return rotQuat;
 }
 
-Eigen::Vector3d TrackingSystemCalibration::calibrateTranslation(const std::vector<Sample_t>& samples, const Eigen::Quaterniond& calibratedRotation)
+Eigen::Vector3d TrackingSystemCalibration::calibrateTranslation(const std::vector<Sample_t>& samples, const Eigen::Quaterniond& calibratedRotation, CalibrationError& eCalibrationError)
 {
+    eCalibrationError = CalibrationError::None;
+
     // @TODO: optimise this, this is REALLY slow -> up to 2 SECOND LAG SPIKE IN DEBUG
     std::vector<std::pair<Eigen::Vector3d, Eigen::Matrix3d>> deltas;
     deltas.reserve(samples.size() * (samples.size() - 1)); // combination(2, 1)
@@ -244,7 +249,7 @@ Eigen::Vector3d TrackingSystemCalibration::calibrateTranslation(const std::vecto
 
     if (svd.info() != Eigen::Success) {
         LOG_CALIB_WARN("Failed to compute numerically stable translation SVD! Aborting calibration...");
-        return Eigen::Vector3d(NAN, NAN, NAN);
+        eCalibrationError = CalibrationError::LackOfTranslationVariance;
     }
 
     Eigen::Vector3d singularValues = svd.singularValues();
@@ -258,12 +263,14 @@ Eigen::Vector3d TrackingSystemCalibration::calibrateTranslation(const std::vecto
 
     // we want to only accept well-conditioned solutions, to minimise the discrepenancy of the error term
     if (motionVariance < k_TRANSLATION_MIN_MOTION_THRESHOLD || amplifiedNoiseFactor > k_TRANSLATION_MAX_AMPLIFIED_NOISE_FACTOR) {
-        return Eigen::Vector3d(NAN, NAN, NAN);
+        eCalibrationError = CalibrationError::LackOfTranslationVariance;
     }
 
     Eigen::Vector3d trans = svd.solve(constants);
 
-    LOG_CALIB_INFO("Calibrated translation (cm): x={:.2f} y={:.2f} z={:.2f}", trans[0] * 100.0, trans[1] * 100.0, trans[2] * 100.0);
+    if (eCalibrationError == CalibrationError::None) {
+        LOG_CALIB_INFO("Calibrated translation (cm): x={:.2f} y={:.2f} z={:.2f}", trans[0] * 100.0, trans[1] * 100.0, trans[2] * 100.0);
+    }
     return trans;
 }
 
@@ -296,18 +303,19 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
     }
 
     // apply samples to avoid sampling twice
-    Eigen::Quaterniond computedRotation = calibrateRotation(m_samples);
-    Eigen::Vector3d computedTranslation = calibrateTranslation(m_samples, computedRotation);
-
     CalibrationError eCalibrationError = CalibrationError::None;
+    CalibrationError eTmpCalibErr = CalibrationError::None;
+
     // ensure rotation is valid
-    if (computedRotation.squaredNorm() < 1e-6) {
-        eCalibrationError = CalibrationError::LackOfRotationalVariance;
+    Eigen::Quaterniond computedRotation = calibrateRotation(m_samples, eTmpCalibErr);
+    if (eTmpCalibErr != CalibrationError::None) {
+        eCalibrationError = eTmpCalibErr;
     }
 
     // ensure translation is valid
-    if (eCalibrationError == CalibrationError::None && (isnan(computedTranslation.x()) || isnan(computedTranslation.y()) || isnan(computedTranslation.z()))) {
-        eCalibrationError = CalibrationError::LackOfTranslationVariance;
+    Eigen::Vector3d computedTranslation = calibrateTranslation(m_samples, computedRotation, eTmpCalibErr);
+    if (eTmpCalibErr != CalibrationError::None) {
+        eCalibrationError = eTmpCalibErr;
     }
 
     if (isContinuousCalibration()) {
