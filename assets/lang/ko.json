@@ -41,7 +41,7 @@
   "calibration_warning_stage_tracking_disabled_ignore_button": "다시 보지 않기",
 
   "calibration_action_start": "일반 보정",
-  "calibration_action_clear": "보정 지우기",
+  "calibration_action_clear": "보정 삭제",
   "calibration_action_continuous": "연속 보정",
   "calibration_action_edit": "보정 편집",
   "save_calibration_profile": "프로필 저장",
