@@ -19,10 +19,9 @@
 #pragma clang diagnostic ignored "-Wswitch"
 #endif // __clang__
 
-template <>
-struct fmtquill::formatter<ipc::protocol::Version_t> : formatter<string_view> {
-    auto format(ipc::protocol::Version_t version, format_context& ctx) const -> format_context::iterator;
-};
+namespace ipc::protocol {
+std::string format_as(Version_t version);
+}
 
 namespace vr {
 std::string format_as(EVROverlayError overlayErr);
