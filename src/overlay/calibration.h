@@ -258,7 +258,7 @@ private:
     Pose_t applyTransform(const Pose_t& originalPose, const Eigen::AffineCompact3d& transform) const;
     double retargetingErrorRMS(const Eigen::Vector3d& hmdToTargetPos, const Eigen::AffineCompact3d& calibration) const;
     Eigen::Vector3d computeRefToTargetOffset(const Eigen::AffineCompact3d& calibration) const;
-    Eigen::Vector4d computeAxisVariance(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation) const;
+    Eigen::Vector4d computeAxisVariance(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation, bool isRelativeCalibration) const;
     bool validateCalibration(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation, double& rmsError, Eigen::Vector3d& posOffset, bool isRelative);
 
     bool checkAndUpdateWorldFromDriver(const CalibrationDevice& device, Eigen::Quaterniond& lastRot, Eigen::Vector3d& lastTrans, Eigen::AffineCompact3d& outDelta) const;

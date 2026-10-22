@@ -319,7 +319,7 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
         validateCalibration(calibratedRotation, calibratedTranslation, m_lastRmsError, _posOffset_temp, isRelativeCalibration);
 
         // also keep axis variance in sync, we want to compute reality and not the (possibly incorrect) past!
-        m_lastAxisVariance = computeAxisVariance(calibratedRotation, calibratedTranslation)(1);
+        m_lastAxisVariance = computeAxisVariance(calibratedRotation, calibratedTranslation, isRelativeCalibration)(1);
     }
 
     double rmsError = 0.0;
@@ -332,7 +332,7 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
         eCalibrationError = CalibrationError::WorseRmsThanLast;
     }
 
-    double axisVariance = computeAxisVariance(computedRotation, computedTranslation)(1);
+    double axisVariance = computeAxisVariance(computedRotation, computedTranslation, false)(1);
     if (eCalibrationError == CalibrationError::None && axisVariance < k_MAX_AXIS_VARIANCE_THRESHOLD) {
         eCalibrationError = CalibrationError::AxisVarianceTooHigh;
     }
@@ -505,7 +505,7 @@ Eigen::Vector3d TrackingSystemCalibration::computeRefToTargetOffset(const Eigen:
 }
 
 // taken from legacy codebase
-Eigen::Vector4d TrackingSystemCalibration::computeAxisVariance(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation) const
+Eigen::Vector4d TrackingSystemCalibration::computeAxisVariance(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation, bool isRelativeCalibration) const
 {
     // We want to determine if the user rotated in enough axis to find a unique solution.
     // It's sufficient to rotate in two axis - this is because once we constrain the mapping
@@ -519,6 +519,42 @@ Eigen::Vector4d TrackingSystemCalibration::computeAxisVariance(const Eigen::Quat
     // to the identity component, and one to the axis component. Thus, we check the variance (eigenvalue) of
     // the third primary component to see if we've moved in two axis.
     Eigen::Affine3d calibration = Eigen::Translation3d(translation) * rotation;
+
+    // recompute world space calibration from relative calibration
+    if (isRelativeCalibration) {
+        Eigen::Vector3d sampleCalibTrans = Eigen::Vector3d::Zero();
+        Eigen::Quaterniond sampleCalibRot = Eigen::Quaterniond::Identity();
+        size_t validCount = 0;
+
+        for (auto& sample : m_samples) {
+            if (!sample.isPoseValid)
+                continue;
+
+            // compute H' and T'
+            Eigen::Affine3d refWorldNow = Eigen::Translation3d(sample.reference.trans) * sample.reference.rot;
+            Eigen::Affine3d targetWorldNow = Eigen::Translation3d(sample.target.trans) * sample.target.rot;
+
+            // T_H = H' * C_L
+            Eigen::Affine3d expectedTargetWorld = refWorldNow * calibration;
+
+            // C' = T_H * (T')^-1
+            Eigen::Affine3d worldCalib = expectedTargetWorld * targetWorldNow.inverse();
+
+            // averaging
+            sampleCalibTrans += worldCalib.translation();
+            Eigen::Quaterniond q(worldCalib.linear());
+            if (validCount == 0) {
+                sampleCalibRot = q;
+            } else {
+                sampleCalibRot = sampleCalibRot.slerp(1.0 / (validCount + 1), q);
+            }
+            validCount++;
+        }
+
+        if (validCount > 0) {
+            calibration = Eigen::Translation3d(sampleCalibTrans / static_cast<double>(validCount)) * sampleCalibRot;
+        }
+    }
 
     std::ostringstream dbgStream;
 
