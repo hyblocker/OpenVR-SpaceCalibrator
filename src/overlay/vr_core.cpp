@@ -135,15 +135,15 @@ vr::ETrackedPropertyError VRState::getSteamVrPropString(const vr::TrackedDeviceI
 
 bool VRState::updateSteamVRDevice(const vr::TrackedDeviceIndex_t deviceId)
 {
+    bool isConnected = vr::VRSystem()->IsTrackedDeviceConnected(deviceId);
+    m_aDevices[deviceId].bIsConnected = isConnected;
+
     vr::ETrackedDeviceClass deviceClass = vr::VRSystem()->GetTrackedDeviceClass(deviceId);
 
     // we dont care about these devices types
     if (deviceClass == vr::TrackedDeviceClass_Invalid // Unset
         || deviceClass == vr::TrackedDeviceClass_DisplayRedirect) // vr::IVRVirtualDisplay
         return true;
-
-    bool isConnected = vr::VRSystem()->IsTrackedDeviceConnected(deviceId);
-    m_aDevices[deviceId].bIsConnected = isConnected;
 
     // we don't care about the device if it is not even connected
     if (!isConnected) {
