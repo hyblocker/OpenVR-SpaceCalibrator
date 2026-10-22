@@ -1468,7 +1468,7 @@ void plot_sample_rotations_on_unit_sphere(const std::vector<Sample_t>& samples)
     if (valid_sample_count == 0)
         return;
 
-    if (ImPlot3D::BeginPlot("Sampled Rotations", ImVec2(-1, 500))) {
+    if (ImPlot3D::BeginPlot("Sampled Rotations", ImVec2(-1, 500), ImPlot3DFlags_NoPan | ImPlot3DFlags_NoMenus)) {
         ImPlot3D::SetupAxesLimits(-1.1f, 1.1f, -1.1f, 1.1f, -1.1f, 1.1f, ImPlot3DCond_Always);
         ImPlot3D::SetupAxes("X", "Z", "Y");
 
