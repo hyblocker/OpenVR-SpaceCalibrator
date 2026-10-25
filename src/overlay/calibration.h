@@ -11,6 +11,7 @@
 namespace spacecal {
 
 constexpr double k_TICK_RATE_HZ = 20.0; // tick rate spacecal's internal logic runs at
+constexpr double k_LIVE_METRIC_INTERVAL_SEC = 0.05; // interval in seconds for live metric updates
 constexpr double k_MAX_INVALID_CALIBRATION_TIME_SEC = 60.0; // 60s between invalid calibrations
 constexpr double k_IPC_CONNECTION_RETRY_INTERVAL_SEC = 0.25; // 250ms between IPC connection attempts
 constexpr double k_AUTO_DETECT_DURATION = 5.0; // 2 seconds for auto-detection
@@ -263,6 +264,7 @@ private:
     Eigen::Vector3d computeRefToTargetOffset(const Eigen::AffineCompact3d& calibration) const;
     Eigen::Vector4d computeAxisVariance(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation, bool isRelativeCalibration) const;
     bool validateCalibration(const Eigen::Quaterniond& rotation, const Eigen::Vector3d& translation, double& rmsError, Eigen::Vector3d& posOffset, bool isRelative);
+    void updateLiveMetrics(double currentTime);
 
     bool checkAndUpdateWorldFromDriver(const CalibrationDevice& device, Eigen::Quaterniond& lastRot, Eigen::Vector3d& lastTrans, Eigen::AffineCompact3d& outDelta) const;
     bool checkWorldFromDriverJump();
@@ -277,6 +279,7 @@ private:
 private:
     double m_lastTick = 0.0;
     double m_lastScan = 0.0;
+    double m_lastLiveMetricTime = 0.0;
 
     float m_xTargetPrev = 0.0f;
     float m_yTargetPrev = 0.0f;

@@ -643,6 +643,22 @@ bool TrackingSystemCalibration::validateCalibration(const Eigen::Quaterniond& ro
     return ok;
 }
 
+void TrackingSystemCalibration::updateLiveMetrics(double currentTime)
+{
+    if (m_samples.size() < 2 || (currentTime - m_lastLiveMetricTime) < k_LIVE_METRIC_INTERVAL_SEC)
+        return;
+    m_lastLiveMetricTime = currentTime;
+
+    double rmsError = 0.0;
+    Eigen::Vector3d posOffset = Eigen::Vector3d::Zero();
+    validateCalibration(calibratedRotation, calibratedTranslation, rmsError, posOffset, isRelativeCalibration);
+    double axisVariance = computeAxisVariance(calibratedRotation, calibratedTranslation, isRelativeCalibration)(1);
+
+    errorMetrics.rmsError.push(currentTime, k_METRIC_HISTORY_TIMESPAN, rmsError);
+    errorMetrics.axisIndependence.push(currentTime, k_METRIC_HISTORY_TIMESPAN, axisVariance);
+    errorMetrics.posOffset_rmsError.push(currentTime, k_METRIC_HISTORY_TIMESPAN, posOffset);
+}
+
 Sample_t TrackingSystemCalibration::collectSample(double currentTime) const
 {
     vr::DriverPose_t reference, target;
@@ -1057,6 +1073,8 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
                 }
             }
         }
+
+        updateLiveMetrics(currentTime);
     }
 
     if (m_samples.size() == getSampleCount()) {
