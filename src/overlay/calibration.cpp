@@ -324,7 +324,8 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
 
     double rmsError = 0.0;
     Eigen::Vector3d posOffset = Eigen::Vector3d::Zero();
-    if (eCalibrationError == CalibrationError::None && (!validateCalibration(computedRotation, computedTranslation, rmsError, posOffset, false))) {
+    bool isValidCalibration = validateCalibration(computedRotation, computedTranslation, rmsError, posOffset, false);
+    if (eCalibrationError == CalibrationError::None && !isValidCalibration) {
         eCalibrationError = CalibrationError::RmsErrorTooHigh;
     }
 
