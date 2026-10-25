@@ -768,7 +768,6 @@ bool TrackingSystemCalibration::checkWorldFromDriverJump()
 void TrackingSystemCalibration::init()
 {
     m_samples.reserve((size_t)CalibrationSpeed::VERY_SLOW);
-    updateRotationVarianceCosineThreshold();
 }
 
 void TrackingSystemCalibration::reset()
@@ -785,7 +784,6 @@ void TrackingSystemCalibration::reset()
     m_lastTargetWorldFromDriverTrans = Eigen::Vector3d::Constant(NAN);
 
     m_shouldForceCalibrateNextTime = true;
-    updateRotationVarianceCosineThreshold();
 }
 
 void TrackingSystemCalibration::clearCurrentCalibration()
@@ -827,11 +825,26 @@ void TrackingSystemCalibration::startContinuous()
     hmdIsInReferenceTrackingSystem = hmdDevice.szTrackingSystemId == referenceDevice.trackingSystem;
 }
 
-void TrackingSystemCalibration::updateRotationVarianceCosineThreshold()
+bool TrackingSystemCalibration::hasEnoughRotationVariance() const
 {
-    const double range_rad = k_ROTATION_VARIANCE_TARGET_DEGREES * (M_PI / 180.0);
-    double min_angle_rad = range_rad / (1.2 * cbrt((double)getSampleCount()));
-    m_rotationVarianceCosineThreshold = cos(min_angle_rad / 2.0);
+    Eigen::Matrix3d scatter = Eigen::Matrix3d::Zero();
+    if (!m_samples.empty()) {
+        const Eigen::Quaterniond anchorRotation(m_samples.front().reference.rot);
+        for (size_t i = 0; i < m_samples.size(); i++) {
+            const Eigen::Quaterniond sampleRotation(m_samples[i].reference.rot);
+            const Eigen::AngleAxisd rotationFromAnchor(sampleRotation * anchorRotation.inverse()); // angle domain in [0, pi]
+            const Eigen::Vector3d rotationVector = rotationFromAnchor.axis() * rotationFromAnchor.angle();
+            scatter += rotationVector * rotationVector.transpose();
+        }
+    }
+
+    const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen_solver(scatter);
+    const Eigen::Vector3d eigenvaluesAscending = eigen_solver.eigenvalues();
+    const double totalRotationEnergy = eigenvaluesAscending.sum();
+    if (totalRotationEnergy < k_ROTATION_VARIANCE_MIN_TOTAL_ROTATION)
+        return false;
+
+    return (eigenvaluesAscending[1] / totalRotationEnergy) > k_ROTATION_VARIANCE_SECOND_AXIS_RATIO;
 }
 
 bool TrackingSystemCalibration::isSampleVariedEnough(const Sample_t& newSample)
@@ -839,15 +852,26 @@ bool TrackingSystemCalibration::isSampleVariedEnough(const Sample_t& newSample)
     if (!enforceMinimumRotationVariance || m_samples.empty())
         return true;
 
-    const Eigen::Quaterniond new_rotation(newSample.reference.rot);
+    // once the collected samples are good enough, stop caring about the rotation variance
+    if (hasEnoughRotationVariance())
+        return true;
 
-    for (const auto& sample : m_samples) {
-        const Eigen::Quaterniond existing_rotation(sample.reference.rot);
-        if (std::abs(new_rotation.dot(existing_rotation)) >= m_rotationVarianceCosineThreshold) {
-            return false;
+    // reject similar rotations
+    const Eigen::Quaterniond newSampleRotation(newSample.reference.rot);
+    const double duplicateAngleRadians = k_ROTATION_VARIANCE_DUPLICATE_DEGREES * (M_PI / 180.0);
+    // angle between rotations = 2 * acos(|dot|) so we compare dot against cos(angle / 2)
+    const double minimumQuaternionDot = cos(duplicateAngleRadians * 0.5);
+
+    int nearbySampleCount = 0;
+    for (const Sample_t& existingSample : m_samples) {
+        const Eigen::Quaterniond existingSampleRotation(existingSample.reference.rot);
+
+        if (abs(newSampleRotation.dot(existingSampleRotation)) > minimumQuaternionDot) {
+            nearbySampleCount++;
+            if (nearbySampleCount >= k_ROTATION_VARIANCE_MAX_DUPLICATES)
+                return false;
         }
     }
-
     return true;
 }
 

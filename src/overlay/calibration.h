@@ -29,7 +29,11 @@ constexpr double k_ROTATION_MIN_VARIANCE = 0.15; // @TODO: fine tune
 constexpr double k_TRANSLATION_MIN_MOTION_THRESHOLD = 0.01; // @TODO: fine tune
 constexpr double k_TRANSLATION_MAX_AMPLIFIED_NOISE_FACTOR = 3.0; // @TODO: fine tune
 constexpr size_t k_MIN_DELTA_SAMPLE_COUNT = 200;
-constexpr double k_ROTATION_VARIANCE_TARGET_DEGREES = 14.0; // how much rotation variance to enforce in degrees
+
+constexpr double k_ROTATION_VARIANCE_MIN_TOTAL_ROTATION = 3.0; // sum of squared radians vs noise
+constexpr int k_ROTATION_VARIANCE_SECOND_AXIS_RATIO = 3; // middle eigen value vs total
+constexpr double k_ROTATION_VARIANCE_DUPLICATE_DEGREES = 3.0; // the variance for what are considered duplicates in degrees
+constexpr int k_ROTATION_VARIANCE_MAX_DUPLICATES = 5; // maximum amount of duplicates for rotational variance
 
 constexpr double k_METRIC_HISTORY_TIMESPAN = 60.0; // how much time in seconds we keep track of for the graphs
 constexpr double k_WARN_DEVICE_NOT_TRACKING_INTERVAL_SEC = 5.0; // time in seconds between "Device isnt tracking" log msgs
@@ -143,7 +147,6 @@ public:
     inline void clearSamples()
     {
         m_samples.clear();
-        updateRotationVarianceCosineThreshold();
     }
     // clears metrics data to account for tracking data shifts; should allow the system to escpae from a local minima when a tracking jump occurs to then find the new local minima
     inline void invalidateMetrics()
@@ -268,7 +271,7 @@ private:
     void trackCollectedSamplesForErrorTracking();
     bool detectCorrelatingDevices(double currentTime);
 
-    void updateRotationVarianceCosineThreshold();
+    bool hasEnoughRotationVariance() const;
     bool isSampleVariedEnough(const Sample_t& newSample);
 
 private:
@@ -291,10 +294,6 @@ private:
     double m_lastNotTrackingTargetWarnTime = 0.0;
     double m_lastNotTrackingRefWarnTime = 0.0;
     double m_lastNoDevicesWarnTime = 0.0;
-
-    // for enforcing rot variance when collecting samples
-    // @NOTE: dynamically updated whenever sample count changes
-    double m_rotationVarianceCosineThreshold = 0.0;
 
     // for auto device detection
     int m_candidateScore = 0;
