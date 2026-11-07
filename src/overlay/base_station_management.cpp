@@ -18,43 +18,7 @@
 #if OS_WINDOWS
 #include <objbase.h> // need COM for worker thread
 
-// increase BLE poll rate for speed on windows
-// https://stackoverflow.com/a/37328965
-#include <BluetoothAPIs.h>
-#include <Bthsdpdef.h>
 #include <windows.h>
-
-const DWORD IOCTL_BLE_SCAN_FREQUENCY = 0x41118C;
-
-struct LE_SCAN_REQUEST_ORIG {
-    uint32_t scan_type; // 0 = passive, 1 = active
-    uint16_t scan_window;
-    uint16_t scan_interval;
-};
-
-struct LE_SCAN_REQUEST_WIN10 {
-    uint32_t unknown1;
-    uint32_t scan_type; // 0 = passive, 1 = active
-    uint32_t unknown2;
-    uint16_t scan_window;
-    uint16_t scan_interval;
-    uint32_t unknown3[2];
-};
-
-// https://www.bluetooth.com/bluetooth-le-primer/#mcetoc_1iiprfme5g
-enum LE_SCAN_REQUEST_PHY_MODE {
-    LE_SCAN_PHY_1M = 1, // LE 1M PHY (1 Mbps)
-    LE_SCAN_PHY_2M = 2, // LE 2M PHY (2 Mbps)
-    LE_SCAN_PHY_CODED = 4 // LE Coded PHY (Long Range)
-};
-
-struct LE_SCAN_REQUEST_WIN11 {
-    uint32_t override_phy; // 0 = use default, 1 = override, other values fail
-    uint32_t scan_type; // 0 = passive, 1 = active
-    uint32_t mode_or_phy; // LE_SCAN_REQUEST_PHY_MODE, if and only if use_phy == 1
-    uint16_t scan_window; // LE scan window (units of 0.625ms); strictly <= scan_interval
-    uint16_t scan_interval; // LE scan interval (units of 0.625ms)
-};
 
 #endif // OS_WINDOWS
 
@@ -830,67 +794,6 @@ namespace bluetooth {
         return simpleble_adapter_is_bluetooth_enabled();
     }
 
-#if OS_WINDOWS
-    bool _try_scan_device_io_control(HANDLE hBtRadio, OVERLAPPED ov, void* pReq, DWORD reqSize)
-    {
-        ResetEvent(ov.hEvent);
-        DWORD dwBytesWritten = 0;
-
-        BOOL bOk = DeviceIoControl(hBtRadio, IOCTL_BLE_SCAN_FREQUENCY, pReq, reqSize, NULL, 0, &dwBytesWritten, &ov);
-        if (bOk) {
-            return true;
-        }
-
-        DWORD dwErr = GetLastError();
-        if (dwErr == ERROR_IO_PENDING) {
-            // check if overlapped io is allowing async
-            DWORD dwWait = WaitForSingleObject(ov.hEvent, 2000);
-            if (dwWait != WAIT_OBJECT_0) {
-                CancelIoEx(hBtRadio, &ov);
-                return false;
-            }
-            DWORD dwTransferred = 0;
-            return GetOverlappedResult(hBtRadio, &ov, &dwTransferred, FALSE) != 0;
-        }
-
-        if (dwErr == ERROR_INVALID_PARAMETER) {
-            // fallback to blocking
-            return DeviceIoControl(hBtRadio, IOCTL_BLE_SCAN_FREQUENCY, pReq, reqSize, NULL, 0, &dwBytesWritten, NULL) != 0;
-        }
-
-        return false;
-    }
-
-    void _apply_ble_scan_frequency(HANDLE hBtRadio)
-    {
-        platform::setThreadName("BluetoothScanFreqThread");
-
-        OVERLAPPED ov = { 0 };
-        ov.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        if (!ov.hEvent) {
-            LOG_BLUETOOTH_WARN("Failed to create event for BLE scan frequency IOCTL, skipping");
-            CloseHandle(hBtRadio);
-            return;
-        }
-
-        // the LE_SCAN_REQUEST struct varies across windows version so fuck it try all of them lmao
-        LE_SCAN_REQUEST_WIN11 scanReqWin11 = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
-        LE_SCAN_REQUEST_WIN10 scanReqWin10 = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
-        LE_SCAN_REQUEST_ORIG scanReqLegacy = { .scan_type = 1, .scan_window = 160, .scan_interval = 160 };
-
-        if (!_try_scan_device_io_control(hBtRadio, ov, &scanReqWin11, sizeof(scanReqWin11))) {
-            if (!_try_scan_device_io_control(hBtRadio, ov, &scanReqWin10, sizeof(scanReqWin10))) {
-                if (!_try_scan_device_io_control(hBtRadio, ov, &scanReqLegacy, sizeof(scanReqLegacy))) {
-                    LOG_BLUETOOTH_WARN("Failed to increase BLE scan frequency. Bluetooth management may be slower. Error: {}", GetLastError());
-                }
-            }
-        }
-
-        CloseHandle(ov.hEvent);
-        CloseHandle(hBtRadio);
-    }
-#endif // OS_WINDOWS
-
     void _scan_init_thread_main()
     {
         platform::setThreadName("BluetoothScanInitThread");
@@ -912,17 +815,6 @@ namespace bluetooth {
             g_base_station_state.aAdapters[i] = simpleble_adapter_get_handle(i);
         }
 
-#if OS_WINDOWS
-        // Tell the windows API to increase the scan frequency because I like speed
-        BLUETOOTH_FIND_RADIO_PARAMS btFindRadioParam = { .dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS) };
-        HANDLE hBtRadio = INVALID_HANDLE_VALUE;
-        HBLUETOOTH_RADIO_FIND findResult = BluetoothFindFirstRadio(&btFindRadioParam, &hBtRadio);
-        if (findResult != NULL) {
-            BluetoothFindRadioClose(findResult);
-            // DeviceIoControl is blocking here so throw it in it's own thread to not block the main or bluetooth threads
-            std::thread(_apply_ble_scan_frequency, hBtRadio).detach();
-        }
-#endif
         ble_worker_start();
 
         // Scan for stuff
