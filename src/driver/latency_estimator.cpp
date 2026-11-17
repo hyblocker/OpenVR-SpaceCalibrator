@@ -262,7 +262,7 @@ double LatencyEstimator::compute_latency(const DeviceVelocityHistory& ref, const
         ? INFINITY : secondBestDifference / std::max(bestDifference, 1e-9);
 
     // range 0...1
-    double rawConfidence = confidence_from_difference(finalResult.difference)
+    outConfidence = confidence_from_difference(finalResult.difference)
         * confidence_from_ambiguity(ambiguityRatio)
         * confidence_from_sample_support(finalResult.totalWeight, finalResult.sampleCount);
 
