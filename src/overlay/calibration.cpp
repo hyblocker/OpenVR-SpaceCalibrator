@@ -806,6 +806,19 @@ void TrackingSystemCalibration::reset()
 void TrackingSystemCalibration::clearCurrentCalibration()
 {
     LOG_CALIB_INFO("Clearing calibration to identity...");
+    
+    // tell the driver that we have an identity pose
+    for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
+        auto device = VRState::getInstance()->getVrDevice(i);
+        if (device.eDeviceClass != vr::TrackedDeviceClass_Invalid) {
+            // if this is not the target tracking system
+            if (device.szTrackingSystemId != targetDevice.trackingSystem) {
+                continue;
+            }
+            resetCalibrationForDevice(i);
+        }
+    }
+
     calibrationError = CalibrationError::Unknown;
     calibratedRotation = Eigen::Quaterniond::Identity();
     calibratedTranslation = Eigen::Vector3d::Zero();
@@ -1256,14 +1269,14 @@ bool TrackingSystemCalibration::detectCorrelatingDevices(double currentTime)
     return false;
 }
 
-void TrackingSystemCalibration::resetCalibrationForDevice(const CalibrationDevice& device)
+void TrackingSystemCalibration::resetCalibrationForDevice(const vr::TrackedDeviceIndex_t deviceIndex)
 {
     vr::HmdVector3d_t posOrigin = { .v = { 0, 0, 0 } };
     vr::HmdQuaternion_t identityQuat = { .w = 1, .x = 0, .y = 0, .z = 0 };
 
     ipc::protocol::Command_SetDeviceTransform_t args = {};
 
-    args.unTargetOpenVrDeviceId = device.deviceId;
+    args.unTargetOpenVrDeviceId = deviceIndex;
     args.unRelativeReferenceOpenvrDeviceId = vr::k_unTrackedDeviceIndexInvalid;
     args.unRelativeTargetOpenvrDeviceId = vr::k_unTrackedDeviceIndexInvalid;
     args.enabled(false);

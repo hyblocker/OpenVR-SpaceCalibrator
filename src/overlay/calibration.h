@@ -158,7 +158,7 @@ public:
     }
 
     void calibrationTick(const double currentTime);
-    void resetCalibrationForDevice(const CalibrationDevice& device); // resets the given device's pose to the raw pose
+    void resetCalibrationForDevice(const vr::TrackedDeviceIndex_t deviceIndex); // resets the given device's pose to the raw pose
     void apply(); // applies the calibration to the VR runtime
 
     // finds the device id given props, if and only if device id is invalid
