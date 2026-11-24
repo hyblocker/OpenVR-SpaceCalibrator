@@ -566,8 +566,14 @@ Eigen::Vector4d TrackingSystemCalibration::computeAxisVariance(const Eigen::Quat
         if (!sample.isPoseValid)
             continue;
 
-        auto q = Eigen::Quaterniond(sample.target.rot);
-        auto point = Eigen::Vector4d(q.w(), q.x(), q.y(), q.z());
+        const auto updatedTarget = applyTransform(sample.target, calibration);
+
+        auto q = Eigen::Quaterniond(updatedTarget.rot);
+        Eigen::Vector4d point(q.w(), q.x(), q.y(), q.z());
+        // ensure consistent sign
+        if (!points.empty() && point.dot(points.front()) < 0.0) {
+            point = -point;
+        }
         mean += point;
 
         points.push_back(point);
