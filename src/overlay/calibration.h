@@ -281,13 +281,13 @@ private:
     double m_lastScan = 0.0;
     double m_lastLiveMetricTime = 0.0;
 
-    float m_xTargetPrev = 0.0f;
-    float m_yTargetPrev = 0.0f;
-    float m_zTargetPrev = 0.0f;
+    double m_xTargetPrev = 0.0;
+    double m_yTargetPrev = 0.0;
+    double m_zTargetPrev = 0.0;
 
-    float m_xRefPrev = 0.0f;
-    float m_yRefPrev = 0.0f;
-    float m_zRefPrev = 0.0f;
+    double m_xRefPrev = 0.0;
+    double m_yRefPrev = 0.0;
+    double m_zRefPrev = 0.0;
 
     // @TODO: required? we recompute each time so maybe not even required ig
     double m_lastRmsError = INFINITY;

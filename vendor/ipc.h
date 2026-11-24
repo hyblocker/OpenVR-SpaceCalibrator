@@ -2,8 +2,8 @@
 #define HEKKY_IPC_INC
 #include <inttypes.h>
 
-// IPC.h - Single header IPC library for Windows
-// v1.0 - (C) Hekky, under MIT license.
+// IPC.h - Single header IPC library for Windows & Linux
+// v1.1 - (C) Hekky, under MIT license.
 // 
 //  Concepts:
 //    - Shared / streaming memory :: A block of memory thats shared between programs. This is usually filled with data such that one
@@ -18,7 +18,7 @@
 // 
 // Platforms:
 //     - Windows
-//     - Linux (unsupported but eventually yes!)
+//     - Linux
 // 
 // Design:
 //   - cmds are numeric events. i recommend making an enum for them for better readibility.
@@ -26,7 +26,7 @@
 //   - each cmd should have a command associated with it, but isnt necessary.
 //   - a streaming buffer is mainainted too, allocated at init time though.
 //   - allocate a "stack" for event arguments, and then enough data for your streams. you can use void* to access the data directly.
-//
+// 
 //   Shared memory layout:
 // 
 //    o-----------------o
@@ -41,7 +41,9 @@
 //    |      buffer     |
 //    |                 |
 //    o-----------------o
-//
+// 
+// @NOTE: currently relies on C++ - need to make this work in pure C eventually!
+// 
 
 #define IPC_COUNT_OF(arr) (sizeof(arr) / sizeof((arr)[0]))
 

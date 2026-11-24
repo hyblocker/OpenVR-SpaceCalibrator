@@ -342,7 +342,7 @@ CalibrationError TrackingSystemCalibration::computeCalibrationOneshot(double cur
         eCalibrationError = CalibrationError::WorseAxisVarianceThanLast;
     }
 
-    if (eCalibrationError == CalibrationError::None && (isRelativeCalibration && !makeCalibrationLocal(computedRotation, computedTranslation))) {
+    if (eCalibrationError == CalibrationError::None && (isContinuousCalibration() && isRelativeCalibration && !makeCalibrationLocal(computedRotation, computedTranslation))) {
         eCalibrationError = CalibrationError::BadRelativeCalibration;
     }
 
@@ -557,9 +557,8 @@ Eigen::Vector4d TrackingSystemCalibration::computeAxisVariance(const Eigen::Quat
         }
     }
 
-    std::ostringstream dbgStream;
-
     std::vector<Eigen::Vector4d> points;
+    points.reserve(m_samples.size());
 
     Eigen::Vector4d mean = Eigen::Vector4d::Zero();
 
@@ -651,8 +650,8 @@ void TrackingSystemCalibration::updateLiveMetrics(double currentTime)
 
     double rmsError = 0.0;
     Eigen::Vector3d posOffset = Eigen::Vector3d::Zero();
-    validateCalibration(calibratedRotation, calibratedTranslation, rmsError, posOffset, isRelativeCalibration);
-    double axisVariance = computeAxisVariance(calibratedRotation, calibratedTranslation, isRelativeCalibration)(1);
+    validateCalibration(calibratedRotation, calibratedTranslation, rmsError, posOffset, isContinuousCalibration() && isRelativeCalibration);
+    double axisVariance = computeAxisVariance(calibratedRotation, calibratedTranslation, isContinuousCalibration() && isRelativeCalibration)(1);
 
     errorMetrics.rmsError.push(currentTime, k_METRIC_HISTORY_TIMESPAN, rmsError);
     errorMetrics.axisIndependence.push(currentTime, k_METRIC_HISTORY_TIMESPAN, axisVariance);
@@ -677,6 +676,8 @@ Sample_t TrackingSystemCalibration::collectSample(double currentTime) const
             }
             bIsTrackingOk = false;
         }
+    } else {
+        bIsTrackingOk = false;
     }
     if (targetDevice.deviceId < vr::k_unMaxTrackedDeviceCount) {
         bool actuallyConnected = VRState::getInstance()->getVrDevice(targetDevice.deviceId).bIsConnected;
@@ -688,6 +689,8 @@ Sample_t TrackingSystemCalibration::collectSample(double currentTime) const
             }
             bIsTrackingOk = false;
         }
+    } else {
+        bIsTrackingOk = false;
     }
 
     if (!bIsTrackingOk) {
@@ -709,7 +712,7 @@ bool TrackingSystemCalibration::checkAndUpdateWorldFromDriver(const CalibrationD
 
     const auto& pose = CalibrationManager::getInstance()->m_poses[device.deviceId];
     bool actuallyConnected = VRState::getInstance()->getVrDevice(device.deviceId).bIsConnected;
-    if (!VRState::getInstance()->getVrDevice(device.deviceId).bIsConnected || !actuallyConnected || !pose.poseIsValid)
+    if (!actuallyConnected || !pose.poseIsValid || pose.result != vr::ETrackingResult::TrackingResult_Running_OK)
         return false;
 
     Eigen::Quaterniond curRot(pose.qWorldFromDriverRotation.w, pose.qWorldFromDriverRotation.x, pose.qWorldFromDriverRotation.y, pose.qWorldFromDriverRotation.z);
@@ -948,15 +951,15 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
     if (hmdIsInReferenceTrackingSystem) {
         if (targetDevice.deviceId < vr::k_unMaxTrackedDeviceCount) {
             auto targetPose = CalibrationManager::getInstance()->m_poses[targetDevice.deviceId].vecPosition;
-            m_xTargetPrev = (float)targetPose[0];
-            m_yTargetPrev = (float)targetPose[1];
-            m_zTargetPrev = (float)targetPose[2];
+            m_xTargetPrev = targetPose[0];
+            m_yTargetPrev = targetPose[1];
+            m_zTargetPrev = targetPose[2];
         }
         if (referenceDevice.deviceId < vr::k_unMaxTrackedDeviceCount) {
             auto refPose = CalibrationManager::getInstance()->m_poses[referenceDevice.deviceId].vecPosition;
-            m_xRefPrev = (float)refPose[0];
-            m_yRefPrev = (float)refPose[1];
-            m_zRefPrev = (float)refPose[2];
+            m_xRefPrev = refPose[0];
+            m_yRefPrev = refPose[1];
+            m_zRefPrev = refPose[2];
         }
     }
 
@@ -972,6 +975,11 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
     }
 
     m_lastTick = currentTime;
+
+    // exit if we're auto detecting
+    if (state == CalibrationState::AUTO_DETECT_DEVICES_STANDARD || state == CalibrationState::AUTO_DETECT_DEVICES_CONTINUOUS) {
+        return;
+    }
 
     if (state == CalibrationState::CONTINUOUS_IDLE) {
         wantedUpdateInterval = 1.0;
