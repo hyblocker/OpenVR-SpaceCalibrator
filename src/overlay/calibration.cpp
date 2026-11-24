@@ -751,6 +751,10 @@ bool TrackingSystemCalibration::checkWorldFromDriverJump()
     if (!refChanged && !targetChanged) {
         return false;
     }
+    if (refChanged && targetChanged) {
+        // both tracking systems changed together, so attempting to recover calibration will simply break the calibration catastrophically!
+        return false;
+    }
 
     LOG_CALIB_WARN("Detected tracking discontinuity (ref={} target={}), attempting to recover calibration...", refChanged, targetChanged);
     if (refChanged) {
@@ -773,7 +777,7 @@ bool TrackingSystemCalibration::checkWorldFromDriverJump()
     // attempt to recover the calibration so that the user doesn't notice
     Eigen::AffineCompact3d calib = Eigen::Translation3d(calibratedTranslation) * calibratedRotation;
     if (targetChanged) {
-        calib = deltaTarget.inverse() * calib;
+        calib = calib * deltaTarget.inverse();
     }
     if (refChanged) {
         calib = deltaRef * calib;
