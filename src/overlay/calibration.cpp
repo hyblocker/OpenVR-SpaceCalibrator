@@ -183,12 +183,12 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
         eCalibrationError = CalibrationError::LackOfRotationalVariance;
     }
 
-    Eigen::Matrix3d i = Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d identity = Eigen::Matrix3d::Identity();
     if ((svd.matrixU() * svd.matrixV().transpose()).determinant() < 0) {
-        i(2, 2) = -1;
+        identity(2, 2) = -1;
     }
 
-    Eigen::Matrix3d rot = svd.matrixV() * i * svd.matrixU().transpose();
+    Eigen::Matrix3d rot = svd.matrixV() * identity * svd.matrixU().transpose();
     rot.transposeInPlace();
 
     Eigen::Quaterniond rotQuat(rot);
@@ -197,7 +197,7 @@ Eigen::Quaterniond TrackingSystemCalibration::calibrateRotation(const std::vecto
     Eigen::Vector3d euler = rot.canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
 
     if (eCalibrationError == CalibrationError::None) {
-        LOG_CALIB_INFO("Calibrated rotation (deg): yaw={:.2f} pitch={:.2f} roll={:.2f}", euler[1], euler[2], euler[0]);
+        LOG_CALIB_INFO("Calibrated rotation (deg): yaw={:.2f} pitch={:.2f} roll={:.2f}", euler[0], euler[1], euler[2]);
     }
     return rotQuat;
 }
@@ -410,7 +410,7 @@ bool TrackingSystemCalibration::makeCalibrationLocal(Eigen::Quaterniond& rotatio
 
         Eigen::Vector3d euler = rotation.toRotationMatrix().canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
         LOG_CALIB_INFO("Converted to local space. rotation (deg): yaw={:.2f} pitch={:.2f} roll={:.2f} ; translation (cm): x={:.2f} y={:.2f} z={:.2f}",
-            euler[1], euler[2], euler[0],
+            euler[0], euler[1], euler[2],
             translation[0] * 100.0, translation[1] * 100.0, translation[2] * 100.0);
         return true;
     }
@@ -753,12 +753,12 @@ bool TrackingSystemCalibration::checkWorldFromDriverJump()
     if (refChanged) {
         Eigen::Vector3d trans = deltaRef.translation();
         Eigen::Vector3d euler = deltaRef.rotation().canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
-        LOG_CALIB_WARN("  Ref change: pos x={:.2f} y={:.2f} z={:.2f}  rot yaw={:.2f} pitch={:.2f} roll={:.2f}", trans.x(), trans.y(), trans.z(), euler[1], euler[2], euler[0]);
+        LOG_CALIB_WARN("  Ref change: pos x={:.2f} y={:.2f} z={:.2f}  rot yaw={:.2f} pitch={:.2f} roll={:.2f}", trans.x(), trans.y(), trans.z(), euler[0], euler[1], euler[2]);
     }
     if (targetChanged) {
         Eigen::Vector3d trans = deltaTarget.translation();
         Eigen::Vector3d euler = deltaTarget.rotation().canonicalEulerAngles(2, 1, 0) * (180.0 / EIGEN_PI);
-        LOG_CALIB_WARN("  Tgt change: pos x={:.2f} y={:.2f} z={:.2f}  rot yaw={:.2f} pitch={:.2f} roll={:.2f}", trans.x(), trans.y(), trans.z(), euler[1], euler[2], euler[0]);
+        LOG_CALIB_WARN("  Tgt change: pos x={:.2f} y={:.2f} z={:.2f}  rot yaw={:.2f} pitch={:.2f} roll={:.2f}", trans.x(), trans.y(), trans.z(), euler[0], euler[1], euler[2]);
     }
 
     // clear sample data as it'll have invalid data since we detected this discontinuity
