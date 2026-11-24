@@ -1102,7 +1102,7 @@ void TrackingSystemCalibration::calibrationTick(const double currentTime)
         updateLiveMetrics(currentTime);
     }
 
-    if (m_samples.size() == getSampleCount()) {
+    if (m_samples.size() >= getSampleCount()) {
         switch (state) {
         case CalibrationState::SAMPLE: {
             // force calibration in standard mode
