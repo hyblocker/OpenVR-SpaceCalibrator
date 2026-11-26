@@ -4,7 +4,6 @@
 #include <quill/Logger.h>
 #include <quill/bundled/fmt/format.h>
 
-
 #if defined(IS_DRIVER) || defined(IS_OVERLAY)
 #include "log_formatters.h"
 #endif

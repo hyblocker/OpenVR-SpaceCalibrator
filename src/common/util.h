@@ -5,7 +5,6 @@
 #include <inttypes.h>
 #include <string>
 
-
 namespace util {
 void init();
 const std::filesystem::path& getSpaceCalibratorInstallDir();

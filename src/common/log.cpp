@@ -5,16 +5,13 @@
 #include "quill/sinks/ConsoleSink.h"
 #include "quill/sinks/FileSink.h"
 
-
 #include "log.h"
 #include "util.h"
 #include <fmt/chrono.h>
 #include <openvr_driver.h>
 
-
 #include <cassert>
 #include <filesystem>
-
 
 namespace fs = ::std::filesystem;
 
