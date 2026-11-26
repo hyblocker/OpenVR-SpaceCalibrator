@@ -23,6 +23,12 @@ body:
       description: Describe what you expected to happen
   - type: input
     attributes:
+      label: Operating System
+      description: >-
+        The Operating System you are using, e.g. Windows 11, SteamOS, etc.
+      placeholder: Windows 11
+  - type: input
+    attributes:
       label: VR headset
       description: >-
         The VR headset you are using, e.g. Meta Quest 3, Pico 4, Steam Frame,
@@ -32,7 +38,7 @@ body:
     attributes:
       label: Connection method
       description: >-
-        How you are connecting your VR headset to your computer, eg Virtual
+        How you are connecting your VR headset to your computer, e.g. Virtual
         Desktop, Steam Link, Air Link, Oculus Link Cable.
       placeholder: Steam Link
   - type: input
